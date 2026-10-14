@@ -2,10 +2,12 @@
   "name": "CryptoSniper Pro",
   "short_name": "CryptoSniper",
   "description": "تطبيق صفقات الكريبتو المؤكدة بتوافق استراتيجيات الحيتان",
-  "start_url": "./index.html",
+  "id": "/crypto-app/",
+  "start_url": "/crypto-app/index.html",
+  "scope": "/crypto-app/",
   "display": "standalone",
   "background_color": "#030712",
-  "theme_color": "#10b981",
+  "theme_color": "#030712",
   "orientation": "portrait",
   "icons": [
     {

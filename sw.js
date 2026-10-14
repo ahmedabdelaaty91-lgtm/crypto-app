@@ -1,5 +1,5 @@
-// Service Worker for CryptoSniper PWA (Version 2 - Network-First for Instant Updates)
-const CACHE_NAME = 'cryptosniper-v2';
+// Service Worker for CryptoSniper PWA (Version 3 - Network-First for Instant Updates)
+const CACHE_NAME = 'cryptosniper-v3';
 const ASSETS_TO_CACHE = [
   './manifest.json',
   './icon-192.png',
@@ -29,8 +29,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
-  // 1. Live market data: Always fetch fresh from network
-  if (url.includes('binance') || url.includes('api') || url.includes('yahoo')) {
+  // 1. Live market data & trades_data: Always fetch fresh from network
+  if (url.includes('binance') || url.includes('api') || url.includes('yahoo') || url.includes('trades_data')) {
     event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
     return;
   }
