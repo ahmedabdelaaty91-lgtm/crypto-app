@@ -23,10 +23,9 @@
       background: rgba(17, 24, 39, 0.75);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .glass-nav {
-      background: rgba(3, 7, 18, 0.88);
+      background: rgba(3, 7, 18, 0.92);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
@@ -55,7 +54,7 @@
             <span>Crypto & EGX Sniper</span>
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           </h1>
-          <p class="text-[10px] text-slate-400 font-semibold">بينانس (4H / 1D) • البورصة المصرية (1H / 1D)</p>
+          <p class="text-[10px] text-slate-400 font-semibold">بينانس (4H / 1D) • البورصة المصرية (جلسة التداول)</p>
         </div>
       </div>
 
@@ -82,6 +81,26 @@
       </button>
     </div>
 
+    <!-- TRADE STATUS TABS (الكل | نشطة | حققت أرباح | ضربت ستوب) -->
+    <div class="grid grid-cols-4 gap-1 mt-2.5 p-1 rounded-2xl bg-gray-900/90 border border-gray-800 text-xs font-extrabold">
+      <button onclick="switchStatus('all')" id="btnStatusAll" class="py-1.5 rounded-xl bg-gray-800 text-white shadow-sm transition-all flex items-center justify-center gap-1">
+        <span>الكل</span>
+        <span class="text-[9px] px-1.5 py-0.2 bg-gray-700 text-slate-200 rounded-full font-bold" id="countStatusAll">0</span>
+      </button>
+      <button onclick="switchStatus('active')" id="btnStatusActive" class="py-1.5 rounded-xl text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1">
+        <span>⚡ نشطة</span>
+        <span class="text-[9px] px-1.5 py-0.2 bg-cyan-950 text-cyan-400 rounded-full font-bold" id="countStatusActive">0</span>
+      </button>
+      <button onclick="switchStatus('won')" id="btnStatusWon" class="py-1.5 rounded-xl text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1">
+        <span>🏆 رابحة</span>
+        <span class="text-[9px] px-1.5 py-0.2 bg-emerald-950 text-emerald-400 rounded-full font-bold" id="countStatusWon">0</span>
+      </button>
+      <button onclick="switchStatus('stopped')" id="btnStatusStopped" class="py-1.5 rounded-xl text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1">
+        <span>🛑 ستوب</span>
+        <span class="text-[9px] px-1.5 py-0.2 bg-rose-950 text-rose-400 rounded-full font-bold" id="countStatusStopped">0</span>
+      </button>
+    </div>
+
     <!-- TIMEFRAME FILTER PILLS -->
     <div class="flex items-center gap-1.5 mt-2.5 overflow-x-auto no-scrollbar text-xs font-bold" id="tfPillsContainer">
       <!-- Injected dynamically based on market -->
@@ -89,18 +108,18 @@
   </header>
 
   <!-- MARKET HEALTH BANNER -->
-  <div class="px-4 py-2 bg-gray-900/50 border-b border-gray-800/60 flex items-center justify-between text-xs">
+  <div class="px-4 py-2 bg-gray-900/60 border-b border-gray-800/60 flex items-center justify-between text-xs">
     <div class="flex items-center gap-2" id="marketHealthTicker">
       <!-- BTC / EGX30 Status dynamically loaded -->
     </div>
     <div class="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-      <span id="marketSessionTime">جلسة نشطة</span>
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+      <span id="marketSessionTime">مراقبة حية</span>
     </div>
   </div>
 
-  <!-- PWA INSTALL PROMPT BANNER (IF AVAILABLE) -->
-  <div id="installBanner" class="hidden mx-4 mt-3 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border border-emerald-500/40 flex items-center justify-between shadow-xl">
+  <!-- PWA INSTALL PROMPT BANNER -->
+  <div id="installBanner" class="mx-4 mt-3 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border border-emerald-500/40 flex items-center justify-between shadow-xl">
     <div class="flex items-center gap-2.5">
       <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 text-base font-black">📲</div>
       <div>
@@ -114,7 +133,7 @@
   </div>
 
   <!-- MAIN SIGNALS FEED CONTAINER -->
-  <main class="flex-1 p-4 space-y-3 max-w-2xl mx-auto w-full" id="signalsContainer">
+  <main class="flex-1 p-4 space-y-3.5 max-w-2xl mx-auto w-full" id="signalsContainer">
     <!-- Signal Cards injected here -->
   </main>
 
@@ -139,58 +158,73 @@
         <div class="relative flex-1">
           <input type="text" id="assetSearchInput" oninput="filterAssetList()" placeholder="بحث عن اسم السهم أو العملة..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
         </div>
-        <button onclick="toggleSelectAllAssets()" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-slate-200 rounded-xl text-xs font-bold whitespace-nowrap">
-          تحديد الكل
+        <button onclick="toggleSelectAllAssets()" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-slate-300 text-xs font-bold whitespace-nowrap">
+          تحديد / إلغاء الكل
         </button>
       </div>
 
-      <!-- Assets Checkbox List -->
-      <div class="flex-1 overflow-y-auto p-3 space-y-1.5 no-scrollbar" id="assetCheckboxList">
+      <!-- Asset List (Checkboxes) -->
+      <div class="p-3 overflow-y-auto max-h-[50vh] space-y-1.5" id="assetCheckboxList">
         <!-- Injected dynamically -->
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-3 border-t border-gray-800 bg-gray-900 flex items-center gap-2">
-        <button onclick="saveAssetSelection()" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black rounded-xl text-xs shadow-lg shadow-emerald-500/20">
-          حفظ وتطبيق الفلتر 💾
+      <div class="p-4 border-t border-gray-800 bg-gray-900 flex items-center gap-2">
+        <button onclick="saveAssetSelection()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-gray-950 text-xs font-black shadow-lg">
+          حفظ وتطبيق الفلتر ✨
+        </button>
+        <button onclick="closeAssetModal()" class="px-4 py-2.5 rounded-xl bg-gray-800 text-slate-300 text-xs font-bold">
+          إلغاء
         </button>
       </div>
 
     </div>
   </div>
 
-  <!-- BOTTOM NAVIGATION BAR -->
-  <footer class="sticky bottom-0 z-40 glass-nav border-t border-gray-800/80 px-6 py-2">
-    <div class="flex items-center justify-around max-w-md mx-auto text-center">
-      <button onclick="switchTab('signals')" id="tabBtnSignals" class="flex flex-col items-center gap-1 text-emerald-400 font-extrabold text-xs">
-        <span class="text-lg">⚡</span>
-        <span>الصفقات</span>
-      </button>
-      <button onclick="switchTab('watchlist')" id="tabBtnWatchlist" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 font-bold text-xs">
-        <span class="text-lg">⭐</span>
-        <span>المفضلة</span>
-      </button>
-      <button onclick="switchTab('performance')" id="tabBtnPerf" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 font-bold text-xs">
-        <span class="text-lg">📊</span>
-        <span>الأرباح</span>
-      </button>
-      <button onclick="openAssetModal()" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 font-bold text-xs">
-        <span class="text-lg">⚙️</span>
-        <span>الأسهم</span>
+  <!-- PWA INSTALL GUIDE MODAL (IF PROMPT BLOCKED) -->
+  <div id="installGuideModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-2xl mx-auto">
+        📲
+      </div>
+      <div class="text-center space-y-1">
+        <h3 class="text-base font-black text-white">كيف تثبت التطبيق على هاتفك؟</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          ليفتح التطبيق كبرنامج مستقل شاشة كاملة وبدون متصفح:
+        </p>
+      </div>
+      <div class="bg-gray-950 p-3 rounded-2xl border border-gray-800 text-xs space-y-2 text-right">
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-400 font-bold">1.</span>
+          <span>اضغط على <b>الثلاث نقاط (⋮)</b> في أعلى متصفح Google Chrome.</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-400 font-bold">2.</span>
+          <span>اختر <b>"تثبيت التطبيق"</b> (أو "إضافة إلى الشاشة الرئيسية" ثم تثبيت).</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-400 font-bold">3.</span>
+          <span>سيتحول فوراً لتطبيق أندرويد حقيقي يفتح بدون شريط المتصفح!</span>
+        </div>
+      </div>
+      <button onclick="closeInstallGuide()" class="w-full py-2.5 bg-emerald-500 text-gray-950 font-black rounded-xl text-xs">
+        فهمت، شكراً 👍
       </button>
     </div>
-  </footer>
+  </div>
 
+  <!-- SCRIPT LOGIC -->
   <script>
     // ==========================================
     // 1. DATA DEFINITIONS (CRYPTO & EGX ASSETS)
     // ==========================================
     const CRYPTO_COINS = [
       "BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "AVAX", "LINK", "DOT",
-      "NEAR", "SUI", "RENDER", "ICP", "BCH", "SHIB", "PEPE", "FLOKI", "BONK", "WIF",
-      "OP", "ARB", "TIA", "SEI", "INJ", "GRT", "AAVE", "FET", "TAO", "PENDLE",
-      "ENA", "WLD", "JUP", "GALA", "SAND", "MANA", "AXS", "CHZ", "CRV", "CAKE",
-      "1000SATS", "BICO", "QTUM", "SNDKB", "XPL", "MUUB", "OM", "POL", "ZK", "ZRO"
+      "POL", "NEAR", "SHIB", "LTC", "UNI", "ICP", "BCH", "ATOM", "XLM", "ETC",
+      "FIL", "HBAR", "INJ", "IMX", "RENDER", "OP", "ARB", "SUI", "TIA", "SEI",
+      "GRT", "AAVE", "ALGO", "THETA", "FLOW", "CHZ", "GALA", "SAND", "MANA", "AXS",
+      "KAVA", "CELO", "AR", "PYTH", "MANTA", "JUP", "BONK", "FLOKI", "PEPE", "WIF",
+      "NOT", "TAO", "FET", "PIXEL", "XEC", "PENDLE", "STRK", "ALT", "PORTAL", "XAI"
     ];
 
     const EGX_STOCKS = [
@@ -220,12 +254,14 @@
     // 2. STATE MANAGEMENT
     // ==========================================
     let currentMarket = 'crypto'; // 'crypto' or 'egx'
+    let currentStatus = 'all';    // 'all', 'active', 'won', 'stopped'
     let currentTf = 'all';        // 'all', '4h', '1d' for crypto | 'all', '1h', '1d' for egx
     let selectedCrypto = JSON.parse(localStorage.getItem('selected_crypto')) || [...CRYPTO_COINS];
     let selectedEgx = JSON.parse(localStorage.getItem('selected_egx')) || EGX_STOCKS.map(s => s.code);
+    let livePrices = {}; // In-memory live ticker prices
 
     // ==========================================
-    // 3. SAMPLE LIVE SIGNALS REPOSITORY
+    // 3. SAMPLE SIGNALS REPOSITORY WITH DATES, LIVE PRICES, & STATUSES
     // ==========================================
     const SIGNALS_DB = {
       crypto: [
@@ -233,9 +269,15 @@
           symbol: "SOL",
           pair: "SOL/USDT",
           tf: "4h",
+          status: "active", // active, won, stopped
+          publishedAt: "14 أكتوبر • 08:30 م",
+          closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Bollinger Squeeze + MFI Whale",
           reason: "ضغط سوستة في القاع مع تدفق سيولة حيتان غير معتادة",
           entry: 154.20,
+          currentPrice: 159.85,
+          exitPrice: null,
+          achievedPnl: null,
           support: 148.80,
           sl: 148.50,
           tp1: 163.50,
@@ -244,16 +286,21 @@
           tp1Pct: +6.0,
           tp2Pct: +12.8,
           rsi: 52.4,
-          grade: "Grade S+ 💎",
-          time: "جلسة 4H"
+          grade: "Grade S+ 💎"
         },
         {
           symbol: "1000SATS",
           pair: "1000SATS/USDT",
           tf: "4h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 07:15 م",
+          closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: MFI Whale + RSI Divergence",
           reason: "دايفرجنس إيجابي صاعد مع ارتداد مؤشر السيولة الذكية",
           entry: 0.00001143,
+          currentPrice: 0.00001172,
+          exitPrice: null,
+          achievedPnl: null,
           support: 0.00001115,
           sl: 0.00001110,
           tp1: 0.00001184,
@@ -262,16 +309,21 @@
           tp1Pct: +3.61,
           tp2Pct: +6.01,
           rsi: 28.5,
-          grade: "Grade A 🚀",
-          time: "جلسة 4H"
+          grade: "Grade A 🚀"
         },
         {
           symbol: "NEAR",
           pair: "NEAR/USDT",
           tf: "1d",
+          status: "won",
+          publishedAt: "13 أكتوبر • 03:00 م",
+          closedAt: "14 أكتوبر • 06:45 م (حقق TP2)",
           strategy: "⭐ تطابق استراتيجيتين: Donchian Breakout + Supertrend",
           reason: "اختراق قمة القناة لـ 20 شمعة مع تحول السوبر ترند للأخضر",
           entry: 4.85,
+          currentPrice: 6.25,
+          exitPrice: 6.20,
+          achievedPnl: +27.8,
           support: 4.55,
           sl: 4.50,
           tp1: 5.45,
@@ -280,8 +332,53 @@
           tp1Pct: +12.3,
           tp2Pct: +27.8,
           rsi: 56.1,
-          grade: "Grade S 💎",
-          time: "سوينج يومي (1D)"
+          grade: "Grade S 💎"
+        },
+        {
+          symbol: "SUI",
+          pair: "SUI/USDT",
+          tf: "4h",
+          status: "won",
+          publishedAt: "13 أكتوبر • 11:00 ص",
+          closedAt: "13 أكتوبر • 09:30 م (حقق TP1)",
+          strategy: "⭐ تطابق استراتيجيتين: EMA Golden Cross + Stochastic 20",
+          reason: "تقاطع ذهبي صاعد في القاع وتشبع بيعي مكتمل",
+          entry: 1.95,
+          currentPrice: 2.12,
+          exitPrice: 2.11,
+          achievedPnl: +8.2,
+          support: 1.88,
+          sl: 1.87,
+          tp1: 2.11,
+          tp2: 2.25,
+          slPct: -4.1,
+          tp1Pct: +8.2,
+          tp2Pct: +15.4,
+          rsi: 48.0,
+          grade: "Grade S 💎"
+        },
+        {
+          symbol: "OP",
+          pair: "OP/USDT",
+          tf: "4h",
+          status: "stopped",
+          publishedAt: "12 أكتوبر • 07:00 م",
+          closedAt: "13 أكتوبر • 01:15 ص (ضرب الوقف الفني)",
+          strategy: "⭐ تطابق استراتيجيتين: RSI Rebound + Support",
+          reason: "محاولة ارتداد من الدعم ولكن كسر بفعل ضغط تصحيح البيتكوين",
+          entry: 1.55,
+          currentPrice: 1.48,
+          exitPrice: 1.50,
+          achievedPnl: -3.2,
+          support: 1.51,
+          sl: 1.50,
+          tp1: 1.65,
+          tp2: 1.74,
+          slPct: -3.2,
+          tp1Pct: +6.5,
+          tp2Pct: +12.2,
+          rsi: 38.0,
+          grade: "حماية رأس مال 🛡️"
         }
       ],
       egx: [
@@ -289,9 +386,15 @@
           symbol: "COMI",
           pair: "COMI (البنك التجاري الدولي)",
           tf: "1d",
+          status: "won",
+          publishedAt: "12 أكتوبر • 10:30 ص",
+          closedAt: "14 أكتوبر • 01:15 م (حقق الهدف 2)",
           strategy: "⭐ تطابق استراتيجيتين: اختراق فوليوم قياسي + دعم هيكلي",
           reason: "ارتداد قوي من دعم 118 جنيه مع فوليوم شرائي أعلى من متوسط 20 يوماً",
           entry: 121.00,
+          currentPrice: 135.50,
+          exitPrice: 135.00,
+          achievedPnl: +11.5,
           support: 118.00,
           sl: 117.20,
           tp1: 128.50,
@@ -301,16 +404,21 @@
           tp2Pct: +11.5,
           rsi: 48.2,
           grade: "قيادي EGX30 🏛️",
-          currency: "ج.م",
-          time: "فريم اليوم (1D)"
+          currency: "ج.م"
         },
         {
           symbol: "TMGH",
           pair: "TMGH (مجموعة طلعت مصطفى)",
           tf: "1h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 11:15 ص (أثناء الجلسة)",
+          closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: دايفرجنس صاعد + اختراق سحابة الإيشيموكو",
           reason: "تجميع ذكي على فريم الساعة واختراق مقاومة 62 جنيه",
           entry: 62.50,
+          currentPrice: 64.20,
+          exitPrice: null,
+          achievedPnl: null,
           support: 60.80,
           sl: 60.50,
           tp1: 66.00,
@@ -320,16 +428,21 @@
           tp2Pct: +13.6,
           rsi: 58.0,
           grade: "انفجار فوليوم 🚀",
-          currency: "ج.م",
-          time: "فريم الساعة (1H)"
+          currency: "ج.م"
         },
         {
           symbol: "FWRY",
           pair: "FWRY (فوري للمدفوعات)",
           tf: "1h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 12:00 م (أثناء الجلسة)",
+          closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: ارتداد تشبع بيعي RSI + متوسط EMA 50",
           reason: "ارتداد من قاع 8.20 جنيه مع شمعة ابتلاعية صاعدة",
           entry: 8.45,
+          currentPrice: 8.70,
+          exitPrice: null,
+          achievedPnl: null,
           support: 8.15,
           sl: 8.10,
           tp1: 8.95,
@@ -339,8 +452,31 @@
           tp2Pct: +12.4,
           rsi: 36.4,
           grade: "قاع ارتداد 🎯",
-          currency: "ج.م",
-          time: "فريم الساعة (1H)"
+          currency: "ج.م"
+        },
+        {
+          symbol: "SWDY",
+          pair: "SWDY (السويدي إليكتريك)",
+          tf: "1d",
+          status: "stopped",
+          publishedAt: "11 أكتوبر • 10:15 ص",
+          closedAt: "12 أكتوبر • 11:30 ص (ضرب الوقف)",
+          strategy: "⭐ تطابق استراتيجيتين: Support + RSI Divergence",
+          reason: "محاولة تكوين قاع مزدوج لكن جني أرباح القطاع كسر الدعم",
+          entry: 48.50,
+          currentPrice: 46.80,
+          exitPrice: 47.10,
+          achievedPnl: -2.8,
+          support: 47.30,
+          sl: 47.10,
+          tp1: 52.00,
+          tp2: 55.50,
+          slPct: -2.8,
+          tp1Pct: +7.2,
+          tp2Pct: +14.4,
+          rsi: 41.0,
+          grade: "حماية رأس مال 🛡️",
+          currency: "ج.م"
         }
       ]
     };
@@ -349,7 +485,7 @@
     // 4. PRICE FORMATTER
     // ==========================================
     function formatPrice(val, currency = "$") {
-      if (!val) return "0.00";
+      if (val === null || val === undefined || isNaN(val)) return "0.00";
       const abs = Math.abs(val);
       let formatted = "";
       if (abs >= 1000) formatted = val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -367,16 +503,16 @@
       container.innerHTML = '';
 
       const tfs = currentMarket === 'crypto' 
-        ? [{ id: 'all', label: 'الكل' }, { id: '4h', label: 'فريم 4 ساعات (4H)' }, { id: '1d', label: 'فريم اليوم (1D)' }]
-        : [{ id: 'all', label: 'الكل' }, { id: '1h', label: 'فريم الساعة (1H)' }, { id: '1d', label: 'فريم اليوم (1D)' }];
+        ? [{ id: 'all', label: 'كل الفريمات' }, { id: '4h', label: 'فريم 4 ساعات (4H)' }, { id: '1d', label: 'فريم اليوم (1D)' }]
+        : [{ id: 'all', label: 'كل الفريمات' }, { id: '1h', label: 'فريم الساعة (1H)' }, { id: '1d', label: 'فريم اليوم (1D)' }];
 
       tfs.forEach(tf => {
         const btn = document.createElement('button');
         const isActive = currentTf === tf.id;
-        btn.className = `px-3 py-1 rounded-full whitespace-nowrap transition-all ${
+        btn.className = `px-3 py-1 rounded-xl whitespace-nowrap transition-all ${
           isActive 
-            ? 'bg-emerald-500 text-gray-950 shadow-md font-black' 
-            : 'bg-gray-900 border border-gray-800 text-slate-400 hover:text-white'
+            ? 'bg-slate-200 text-gray-950 font-black shadow-md' 
+            : 'bg-gray-900/80 text-slate-400 hover:text-white border border-gray-800'
         }`;
         btn.textContent = tf.label;
         btn.onclick = () => {
@@ -388,47 +524,109 @@
       });
     }
 
+    function switchStatus(status) {
+      currentStatus = status;
+
+      // Update button styles
+      ['all', 'active', 'won', 'stopped'].forEach(s => {
+        const btn = document.getElementById(`btnStatus${s.charAt(0).toUpperCase() + s.slice(1)}`);
+        if (s === status) {
+          if (s === 'won') btn.className = "py-1.5 rounded-xl bg-emerald-500 text-gray-950 font-black shadow-md transition-all flex items-center justify-center gap-1";
+          else if (s === 'stopped') btn.className = "py-1.5 rounded-xl bg-rose-500 text-white font-black shadow-md transition-all flex items-center justify-center gap-1";
+          else if (s === 'active') btn.className = "py-1.5 rounded-xl bg-cyan-500 text-gray-950 font-black shadow-md transition-all flex items-center justify-center gap-1";
+          else btn.className = "py-1.5 rounded-xl bg-slate-200 text-gray-950 font-black shadow-md transition-all flex items-center justify-center gap-1";
+        } else {
+          btn.className = "py-1.5 rounded-xl text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1";
+        }
+      });
+
+      renderSignals();
+    }
+
+    function updateStatusCounts() {
+      const list = SIGNALS_DB[currentMarket] || [];
+      const userSelected = currentMarket === 'crypto' ? selectedCrypto : selectedEgx;
+      const validAssets = list.filter(item => userSelected.includes(item.symbol));
+
+      const countAll = validAssets.length;
+      const countActive = validAssets.filter(i => i.status === 'active').length;
+      const countWon = validAssets.filter(i => i.status === 'won').length;
+      const countStopped = validAssets.filter(i => i.status === 'stopped').length;
+
+      document.getElementById('countStatusAll').textContent = countAll;
+      document.getElementById('countStatusActive').textContent = countActive;
+      document.getElementById('countStatusWon').textContent = countWon;
+      document.getElementById('countStatusStopped').textContent = countStopped;
+    }
+
     function renderMarketHealth() {
       const ticker = document.getElementById('marketHealthTicker');
+      const sessionLabel = document.getElementById('marketSessionTime');
+
       if (currentMarket === 'crypto') {
         ticker.innerHTML = `
-          <span class="text-amber-400 font-extrabold">₿ البيتكوين:</span>
-          <span class="text-white font-black" id="liveBtcPrice">$83,730</span>
-          <span class="text-emerald-400 font-bold text-[10px]">(+0.4%) مستقر</span>
+          <span class="text-emerald-400 font-extrabold">حالة البيتكوين:</span>
+          <span class="text-white font-black">مستقر وصاعد 🟢</span>
+          <span class="text-slate-400 text-[10px]">(فحص كل 4 ساعات)</span>
         `;
-        document.getElementById('marketSessionTime').textContent = "فحص كل 4 ساعات (24/7)";
+        sessionLabel.textContent = "سوق 24/7 نشط";
+        sessionLabel.className = "text-emerald-400 font-bold";
       } else {
+        // EGX Session Hours Check (Cairo: 10:00 to 14:30 Sun-Thu)
+        const now = new Date();
+        const day = now.getUTCDay(); // 0 is Sunday, 4 is Thursday, 5 is Friday, 6 is Saturday
+        const utcHour = now.getUTCHours();
+        const cairoHour = (utcHour + 3) % 24; // Cairo is UTC+3 in summer / UTC+2 winter
+
+        const isEgxDay = (day >= 0 && day <= 4);
+        const isEgxHour = (cairoHour >= 10 && cairoHour < 15);
+        const isOpen = isEgxDay && isEgxHour;
+
         ticker.innerHTML = `
-          <span class="text-cyan-400 font-extrabold">🇪🇬 مؤشر EGX 30:</span>
+          <span class="text-cyan-400 font-extrabold">مؤشر EGX 30:</span>
           <span class="text-white font-black">31,480 نقطة</span>
-          <span class="text-emerald-400 font-bold text-[10px]">(+0.85%) صاعد</span>
+          <span class="text-emerald-400 font-bold text-[10px]">(+0.85%)</span>
         `;
-        document.getElementById('marketSessionTime').textContent = "جلسة البورصة (10:00 - 14:30)";
+        
+        if (isOpen) {
+          sessionLabel.textContent = "الجلسة نشطة (10ص - 2:30م)";
+          sessionLabel.className = "text-emerald-400 font-bold";
+        } else {
+          sessionLabel.textContent = "الجلسة مغلقة (الفحص متوقف)";
+          sessionLabel.className = "text-slate-400 font-bold";
+        }
       }
     }
 
     function renderSignals() {
       const container = document.getElementById('signalsContainer');
       container.innerHTML = '';
+      updateStatusCounts();
 
       const list = SIGNALS_DB[currentMarket] || [];
       const userSelected = currentMarket === 'crypto' ? selectedCrypto : selectedEgx;
       const currency = currentMarket === 'crypto' ? '$' : 'ج.م';
 
-      // Filter by user selection and timeframe
+      // Filter by selection, timeframe, and status
       const filtered = list.filter(item => {
         const matchesSelection = userSelected.includes(item.symbol);
         const matchesTf = currentTf === 'all' || item.tf === currentTf;
-        return matchesSelection && matchesTf;
+        const matchesStatus = currentStatus === 'all' || item.status === currentStatus;
+        return matchesSelection && matchesTf && matchesStatus;
       });
 
       if (filtered.length === 0) {
         container.innerHTML = `
           <div class="glass-card rounded-3xl p-8 text-center border border-gray-800 space-y-3">
             <div class="text-4xl">🛡️</div>
-            <h3 class="text-sm font-extrabold text-white">لا توجد صفقات مطابقة في هذا الفلتر حالياً</h3>
+            <h3 class="text-sm font-extrabold text-white">لا توجد صفقات في هذا التبويب حالياً</h3>
             <p class="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-              تم استبعاد الإشارات الفردية لحماية رأس مالك، أو أن العملات/الأسهم المحددة في قائمتك لم تشكل نموذج الدخول الصارم بعد.
+              ${
+                currentStatus === 'won' ? 'لم تسجل صفقات رابحة بعد في هذا الفلتر.' :
+                currentStatus === 'stopped' ? 'ممتاز! لا توجد صفقات ضربت وقف خسارة في هذا الفلتر.' :
+                currentStatus === 'active' ? 'لا توجد صفقات نشطة قيد المتابعة حالياً، بانتظار تشكل نموذج الدخول.' :
+                'تم استبعاد الإشارات غير المتطابقة لحماية رأس مالك.'
+              }
             </p>
             <button onclick="openAssetModal()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-emerald-400 text-xs font-bold rounded-xl border border-gray-700">
               تعديل قائمة الأسهم المتابعة ⚙️
@@ -440,70 +638,133 @@
 
       filtered.forEach(sig => {
         const card = document.createElement('div');
-        card.className = "glass-card rounded-3xl p-4 border border-emerald-500/25 relative overflow-hidden transition-all hover:border-emerald-500/50 shadow-lg";
+        
+        // Calculate current Live PnL
+        const currentP = sig.currentPrice || sig.entry;
+        const pnl = ((currentP - sig.entry) / sig.entry) * 100;
+        const isPnlPositive = pnl >= 0;
+
+        // Card Border & Glow based on Status
+        let cardStyle = "";
+        let statusBadge = "";
+        
+        if (sig.status === 'won') {
+          cardStyle = "border-emerald-500/70 bg-gradient-to-br from-emerald-950/30 via-gray-900 to-gray-950 shadow-emerald-500/10 shadow-lg";
+          statusBadge = `
+            <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 text-[11px] font-black flex items-center gap-1 shadow-sm">
+              <span>🏆 حققت الهدف (+${sig.achievedPnl}%)</span>
+            </span>
+          `;
+        } else if (sig.status === 'stopped') {
+          cardStyle = "border-rose-500/60 bg-gradient-to-br from-rose-950/25 via-gray-900 to-gray-950 shadow-rose-500/10 shadow-lg";
+          statusBadge = `
+            <span class="px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 text-[11px] font-black flex items-center gap-1 shadow-sm">
+              <span>🛑 أغلقت بوقف خسارة (${sig.achievedPnl}%)</span>
+            </span>
+          `;
+        } else {
+          cardStyle = "border-cyan-500/35 bg-gradient-to-br from-cyan-950/20 via-gray-900 to-gray-950 shadow-cyan-500/10 shadow-lg";
+          statusBadge = `
+            <span class="px-2.5 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 text-[11px] font-black flex items-center gap-1 shadow-sm">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+              <span>⚡ نشطة وقيد المتابعة</span>
+            </span>
+          `;
+        }
+
+        card.className = `glass-card rounded-3xl p-4.5 border ${cardStyle} relative overflow-hidden transition-all`;
         card.innerHTML = `
-          <!-- Card Header -->
-          <div class="flex items-start justify-between mb-2.5">
-            <div class="flex items-center gap-2.5">
-              <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr ${
-                currentMarket === 'crypto' ? 'from-purple-950 to-indigo-900 border-purple-500/30 text-purple-300' : 'from-emerald-950 to-teal-900 border-emerald-500/30 text-emerald-300'
+          <!-- Card Header: Pair, Timeframe, Date & Time, and Status Badge -->
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr ${
+                sig.status === 'won' ? 'from-emerald-900 to-teal-800 text-emerald-200 border-emerald-500/40' :
+                sig.status === 'stopped' ? 'from-rose-950 to-red-900 text-rose-200 border-rose-500/40' :
+                currentMarket === 'crypto' ? 'from-purple-950 to-indigo-900 text-purple-200 border-purple-500/40' : 'from-cyan-950 to-blue-900 text-cyan-200 border-cyan-500/40'
               } border flex items-center justify-center font-black text-xs shadow-md">
                 ${sig.symbol}
               </div>
               <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="font-extrabold text-white text-sm tracking-wide">${sig.pair}</span>
-                  <span class="px-2 py-0.5 rounded-md bg-gray-800 text-slate-300 text-[10px] font-extrabold uppercase">${sig.tf}</span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-black text-white text-sm tracking-wide">${sig.pair}</span>
+                  <span class="px-2 py-0.5 rounded-md bg-gray-800 text-slate-200 text-[10px] font-extrabold uppercase border border-gray-700">${sig.tf}</span>
                 </div>
-                <div class="text-[10px] text-slate-400 font-semibold">${sig.time}</div>
+                <!-- تاريخ ووقت نشر الصفقة بجوار الفريم -->
+                <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-300 font-bold">
+                  <span class="flex items-center gap-1 text-slate-400">
+                    <span>🕒 نشرت:</span>
+                    <span class="text-slate-200">${sig.publishedAt}</span>
+                  </span>
+                  ${sig.closedAt ? `<span class="text-slate-400">• <span class="${sig.status === 'won' ? 'text-emerald-400' : 'text-rose-400'}">${sig.closedAt}</span></span>` : ''}
+                </div>
               </div>
             </div>
+            
             <div class="text-left">
-              <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black block">
-                ${sig.grade}
-              </span>
+              ${statusBadge}
             </div>
           </div>
 
           <!-- Strategy Description -->
-          <div class="bg-gray-950/70 rounded-2xl p-2.5 border border-gray-800/80 mb-3 text-[11px] space-y-1">
-            <div class="text-emerald-400 font-bold flex items-center gap-1">
+          <div class="bg-gray-950/80 rounded-2xl p-2.5 border border-gray-800/80 mb-3 text-[11px] space-y-1">
+            <div class="${sig.status === 'won' ? 'text-emerald-400' : sig.status === 'stopped' ? 'text-rose-400' : 'text-cyan-400'} font-bold flex items-center gap-1">
               <span>🎯</span> <span>${sig.strategy}</span>
             </div>
             <p class="text-slate-400 text-[10px] leading-relaxed">${sig.reason}</p>
           </div>
 
-          <!-- Price & Targets Grid -->
-          <div class="grid grid-cols-4 gap-1.5 text-center mb-3">
-            <div class="bg-gray-900/60 p-2 rounded-xl border border-gray-800/80">
-              <div class="text-[9px] text-slate-400 font-bold">الدخول</div>
-              <div class="text-xs font-black text-white">${formatPrice(sig.entry, currency)}</div>
+          <!-- Price & Targets Grid with LIVE PRICE (السعر الحالي) -->
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center mb-3.5">
+            
+            <!-- Entry Price -->
+            <div class="bg-gray-900/80 p-2.5 rounded-2xl border border-gray-800">
+              <div class="text-[10px] text-slate-400 font-bold">سعر الدخول</div>
+              <div class="text-xs font-black text-white mt-0.5">${formatPrice(sig.entry, currency)}</div>
             </div>
-            <div class="bg-rose-950/20 p-2 rounded-xl border border-rose-500/20">
-              <div class="text-[9px] text-rose-400 font-bold">الوقف الفني</div>
-              <div class="text-xs font-black text-rose-300">${formatPrice(sig.sl, currency)}</div>
-              <div class="text-[9px] text-rose-400 font-bold">${sig.slPct}%</div>
+
+            <!-- Current Live Price (السعر الحالي) -->
+            <div class="${isPnlPositive ? 'bg-emerald-950/30 border-emerald-500/30' : 'bg-rose-950/30 border-rose-500/30'} p-2.5 rounded-2xl border shadow-inner">
+              <div class="text-[10px] ${isPnlPositive ? 'text-emerald-400' : 'text-rose-400'} font-bold flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full ${isPnlPositive ? 'bg-emerald-400' : 'bg-rose-400'} animate-ping"></span>
+                <span>${sig.status === 'active' ? 'السعر الحالي' : 'سعر الإغلاق'}</span>
+              </div>
+              <div class="text-xs font-black ${isPnlPositive ? 'text-emerald-300' : 'text-rose-300'} mt-0.5">${formatPrice(currentP, currency)}</div>
+              <div class="text-[10px] font-extrabold ${isPnlPositive ? 'text-emerald-400' : 'text-rose-400'}">
+                ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}%
+              </div>
             </div>
-            <div class="bg-emerald-950/20 p-2 rounded-xl border border-emerald-500/20">
-              <div class="text-[9px] text-emerald-400 font-bold">الهدف 1</div>
-              <div class="text-xs font-black text-emerald-300">${formatPrice(sig.tp1, currency)}</div>
-              <div class="text-[9px] text-emerald-400 font-bold">+${sig.tp1Pct}%</div>
+
+            <!-- Technical Stop Loss -->
+            <div class="bg-rose-950/20 p-2.5 rounded-2xl border border-rose-500/20">
+              <div class="text-[10px] text-rose-400 font-bold">الوقف الفني</div>
+              <div class="text-xs font-black text-rose-300 mt-0.5">${formatPrice(sig.sl, currency)}</div>
+              <div class="text-[10px] text-rose-400 font-bold">${sig.slPct}%</div>
             </div>
-            <div class="bg-emerald-950/40 p-2 rounded-xl border border-emerald-500/40">
-              <div class="text-[9px] text-emerald-400 font-bold">الهدف 2</div>
-              <div class="text-xs font-black text-emerald-200">${formatPrice(sig.tp2, currency)}</div>
-              <div class="text-[9px] text-emerald-400 font-bold">+${sig.tp2Pct}%</div>
+
+            <!-- TP1 Target -->
+            <div class="bg-emerald-950/20 p-2.5 rounded-2xl border border-emerald-500/20">
+              <div class="text-[10px] text-emerald-400 font-bold">الهدف الأول (1)</div>
+              <div class="text-xs font-black text-emerald-300 mt-0.5">${formatPrice(sig.tp1, currency)}</div>
+              <div class="text-[10px] text-emerald-400 font-bold">+${sig.tp1Pct}%</div>
             </div>
+
+            <!-- TP2 Target -->
+            <div class="bg-emerald-950/35 p-2.5 rounded-2xl border border-emerald-500/40">
+              <div class="text-[10px] text-emerald-300 font-bold">الهدف الثاني (2)</div>
+              <div class="text-xs font-black text-emerald-200 mt-0.5">${formatPrice(sig.tp2, currency)}</div>
+              <div class="text-[10px] text-emerald-300 font-bold">+${sig.tp2Pct}%</div>
+            </div>
+
           </div>
 
           <!-- Action Button -->
           <div class="flex items-center gap-2">
             ${currentMarket === 'crypto' 
-              ? `<a href="https://www.binance.com/en/trade/${sig.symbol}_USDT?type=spot" target="_blank" class="flex-1 py-2 bg-gradient-to-r from-emerald-500 to-teal-400 hover:opacity-90 text-gray-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md">
-                   <span>تداول مباشر على بينانس</span> ↗
+              ? `<a href="https://www.binance.com/en/trade/${sig.symbol}_USDT?type=spot" target="_blank" class="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-400 hover:opacity-90 text-gray-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md">
+                   <span>تداول مباشر على بينانس (Binance Spot)</span> ↗
                  </a>`
-              : `<a href="https://www.tradingview.com/chart/?symbol=EGX:${sig.symbol}" target="_blank" class="flex-1 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 text-gray-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md">
-                   <span>عرض الشارت الفني (TradingView)</span> ↗
+              : `<a href="https://www.tradingview.com/chart/?symbol=EGX:${sig.symbol}" target="_blank" class="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 text-gray-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md">
+                   <span>عرض الشارت الفني (TradingView EGX)</span> ↗
                  </a>`
             }
           </div>
@@ -622,7 +883,43 @@
     }
 
     // ==========================================
-    // 8. PWA INSTALL LOGIC
+    // 8. LIVE PRICE POLLING (BINANCE VISION)
+    // ==========================================
+    async function updateLiveCryptoPrices() {
+      if (currentMarket !== 'crypto') return;
+      try {
+        const res = await fetch("https://data-api.binance.vision/api/v3/ticker/price");
+        if (!res.ok) return;
+        const data = await res.json();
+        const priceMap = {};
+        data.forEach(item => {
+          if (item.symbol.endsWith("USDT")) {
+            priceMap[item.symbol] = parseFloat(item.price);
+          }
+        });
+
+        // Update active signals
+        let updated = false;
+        SIGNALS_DB.crypto.forEach(sig => {
+          if (sig.status === 'active' && priceMap[sig.symbol + "USDT"]) {
+            sig.currentPrice = priceMap[sig.symbol + "USDT"];
+            updated = true;
+          }
+        });
+
+        if (updated) {
+          renderSignals();
+        }
+      } catch (e) {
+        console.warn("Live ticker fetch fallback:", e);
+      }
+    }
+
+    // Poll live prices every 15 seconds
+    setInterval(updateLiveCryptoPrices, 15000);
+
+    // ==========================================
+    // 9. PWA INSTALL LOGIC & GUIDE MODAL
     // ==========================================
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -631,16 +928,29 @@
       document.getElementById('installBanner').classList.remove('hidden');
     });
 
-    function installPWA() {
+    async function installPWA() {
       if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
+        try {
+          await deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
             document.getElementById('installBanner').classList.add('hidden');
           }
           deferredPrompt = null;
-        });
+        } catch (err) {
+          showInstallGuide();
+        }
+      } else {
+        showInstallGuide();
       }
+    }
+
+    function showInstallGuide() {
+      document.getElementById('installGuideModal').classList.remove('hidden');
+    }
+
+    function closeInstallGuide() {
+      document.getElementById('installGuideModal').classList.add('hidden');
     }
 
     // Register Service Worker
@@ -649,9 +959,10 @@
     }
 
     // ==========================================
-    // 9. INITIALIZATION
+    // 10. INITIALIZATION
     // ==========================================
     switchMarket('crypto');
+    setTimeout(updateLiveCryptoPrices, 1000);
   </script>
 </body>
 </html>
