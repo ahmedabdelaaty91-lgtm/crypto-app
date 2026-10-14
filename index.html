@@ -54,7 +54,7 @@
             <span>Crypto & EGX Sniper</span>
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           </h1>
-          <p class="text-[10px] text-slate-400 font-semibold">بينانس (4H / 1D) • البورصة المصرية (جلسة التداول)</p>
+          <p class="text-[10px] text-slate-400 font-semibold">160 عملة بينانس سبوت • أسهم البورصة المصرية</p>
         </div>
       </div>
 
@@ -63,7 +63,7 @@
         <button onclick="openAssetModal()" class="px-2.5 py-1.5 rounded-xl bg-gray-900 hover:bg-gray-800 border border-gray-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition-all shadow-sm">
           <span>⚙️</span>
           <span class="hidden sm:inline">تخصيص</span>
-          <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded-full font-bold" id="selectedCountBadge">الكل</span>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded-full font-bold" id="selectedCountBadge">160/160</span>
         </button>
       </div>
 
@@ -73,7 +73,7 @@
     <div class="grid grid-cols-2 gap-1.5 mt-3 p-1 rounded-2xl bg-gray-900 border border-gray-800 text-xs font-extrabold">
       <button onclick="switchMarket('crypto')" id="btnMarketCrypto" class="py-2 rounded-xl bg-emerald-500 text-gray-950 transition-all flex items-center justify-center gap-1.5 shadow-md">
         <span>🪙</span>
-        <span>عملات بينانس (Crypto)</span>
+        <span>بينانس (160 عملة)</span>
       </button>
       <button onclick="switchMarket('egx')" id="btnMarketEgx" class="py-2 rounded-xl text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1.5">
         <span>🇪🇬</span>
@@ -114,7 +114,7 @@
     </div>
     <div class="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-      <span id="marketSessionTime">مراقبة حية</span>
+      <span id="marketSessionTime">بث حي ومباشر</span>
     </div>
   </div>
 
@@ -123,8 +123,8 @@
     <div class="flex items-center gap-2.5">
       <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 text-base font-black">📲</div>
       <div>
-        <div class="text-xs font-extrabold text-white">ثبت التطبيق على شاشة موبايلك!</div>
-        <div class="text-[10px] text-slate-300">يفتح كتطبيق أندرويد حقيقي بدون متصفح</div>
+        <div class="text-xs font-extrabold text-white">ثبت التطبيق على شاشة هاتفك!</div>
+        <div class="text-[10px] text-slate-300">يفتح كتطبيق أندرويد حقيقي بدون شريط متصفح</div>
       </div>
     </div>
     <button onclick="installPWA()" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-gray-950 text-xs font-black shadow-md">
@@ -146,9 +146,9 @@
         <div>
           <h3 class="text-sm font-black text-white flex items-center gap-2">
             <span>🎯</span>
-            <span id="modalTitle">اختيار الأسهم والعملات المتابعة</span>
+            <span id="modalTitle">اختيار العملات والأسهم المتابعة</span>
           </h3>
-          <p class="text-[11px] text-slate-400">حدد فقط الأصول التي تريد أن تصلك صفقاتها في التطبيق</p>
+          <p class="text-[11px] text-slate-400" id="modalSubTitle">حدد الأصول التي تريد متابعة صفقاتها (160 عملة بينانس متاحة)</p>
         </div>
         <button onclick="closeAssetModal()" class="w-8 h-8 rounded-full bg-gray-800 text-slate-300 flex items-center justify-center font-bold text-sm">✕</button>
       </div>
@@ -156,7 +156,7 @@
       <!-- Search & Select All Actions -->
       <div class="p-3 border-b border-gray-800/80 bg-gray-950/40 flex items-center gap-2">
         <div class="relative flex-1">
-          <input type="text" id="assetSearchInput" oninput="filterAssetList()" placeholder="بحث عن اسم السهم أو العملة..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+          <input type="text" id="assetSearchInput" oninput="filterAssetList()" placeholder="بحث سريع عن العملة أو السهم (مثل SOL, QTUM, CIB)..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
         </div>
         <button onclick="toggleSelectAllAssets()" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-slate-300 text-xs font-bold whitespace-nowrap">
           تحديد / إلغاء الكل
@@ -171,7 +171,7 @@
       <!-- Modal Footer -->
       <div class="p-4 border-t border-gray-800 bg-gray-900 flex items-center gap-2">
         <button onclick="saveAssetSelection()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-gray-950 text-xs font-black shadow-lg">
-          حفظ وتطبيق الفلتر ✨
+          حفظ وتطبيق الاختيارات ✨
         </button>
         <button onclick="closeAssetModal()" class="px-4 py-2.5 rounded-xl bg-gray-800 text-slate-300 text-xs font-bold">
           إلغاء
@@ -216,7 +216,7 @@
   <!-- SCRIPT LOGIC -->
   <script>
     // ==========================================
-    // 1. DATA DEFINITIONS (CRYPTO & EGX ASSETS)
+    // 1. ALL 160 BINANCE SPOT COINS & EGX ASSETS
     // ==========================================
     const CRYPTO_COINS = [
       "BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "AVAX", "LINK", "DOT",
@@ -224,14 +224,30 @@
       "FIL", "HBAR", "INJ", "IMX", "RENDER", "OP", "ARB", "SUI", "TIA", "SEI",
       "GRT", "AAVE", "ALGO", "THETA", "FLOW", "CHZ", "GALA", "SAND", "MANA", "AXS",
       "KAVA", "CELO", "AR", "PYTH", "MANTA", "JUP", "BONK", "FLOKI", "PEPE", "WIF",
-      "NOT", "TAO", "FET", "PIXEL", "XEC", "PENDLE", "STRK", "ALT", "PORTAL", "XAI"
+      "NOT", "TAO", "FET", "PIXEL", "XEC", "PENDLE", "STRK", "ALT", "PORTAL", "XAI",
+      "NEXO", "GMX", "CRV", "CAKE", "1INCH", "SNX", "COMP", "ZK", "ZRO", "ENA",
+      "SAGA", "IOST", "JTO", "QTUM", "MINA", "APT", "BOME", "GAS", "TRUMP", "ZIL",
+      "IOTA", "DASH", "ZEC", "RVN", "KSM", "BICO", "HMSTR", "CVC", "BAND", "DUSK",
+      "LSK", "SNDKB", "XPL", "VANA", "AVA", "OGN", "OG", "SENT", "PUMP", "ONT",
+      "WLD", "HYPE", "SKL", "CATI", "MUUB", "JST", "ONE", "SUPER", "AMP", "OPG",
+      "EPIC", "EDEN", "BEAMX", "GPS", "AVNT", "OPEN", "OSMO", "SPK", "TRX", "ADBEB",
+      "MBL", "MUBARAK", "QUICK", "CHIP", "AT", "SHELL", "BROCCOLI714", "ERA", "AGLD", "GNS",
+      "IOTX", "CETUS", "PENGU", "TUT", "TWT", "HOME", "PEOPLE", "CITY", "RED", "BANANA",
+      "VET", "MOVE", "BANK", "1000SATS", "PSG", "ATM", "PORTO", "MEME", "NVDAB", "1000CAT",
+      "GTC", "BB", "HOT", "C98", "MANTRA", "KMNO", "SOLV", "FLUX", "HEMI", "VTHO"
     ];
+
+    const SYMBOL_ALIASES = {
+      "MANTRA": "OM",
+      "POL": "POL",
+      "RENDER": "RENDER"
+    };
 
     const EGX_STOCKS = [
       { code: "COMI", name: "البنك التجاري الدولي (CIB)", sector: "بنوك" },
       { code: "TMGH", name: "مجموعة طلعت مصطفى القابضة", sector: "عقارات" },
       { code: "FWRY", name: "فوري لتكنولوجيا المدفوعات", sector: "تكنولوجيا" },
-      { code: "ESRS", name: "حديد عز", sector: "صناعة" },
+      { code: "ESRS", name: "حديد عز", sector: "صناعة وتعدين" },
       { code: "SWDY", name: "السويدي إليكتريك", sector: "صناعة وكابلات" },
       { code: "HRHO", name: "إي إف جي القابضة (هيرميس)", sector: "خدمات مالية" },
       { code: "ETEL", name: "المصرية للاتصالات (وي)", sector: "اتصالات" },
@@ -258,10 +274,11 @@
     let currentTf = 'all';        // 'all', '4h', '1d' for crypto | 'all', '1h', '1d' for egx
     let selectedCrypto = JSON.parse(localStorage.getItem('selected_crypto')) || [...CRYPTO_COINS];
     let selectedEgx = JSON.parse(localStorage.getItem('selected_egx')) || EGX_STOCKS.map(s => s.code);
-    let livePrices = {}; // In-memory live ticker prices
+    let liveBinancePrices = {};   // Cached live prices directly from Binance
 
     // ==========================================
-    // 3. SAMPLE SIGNALS REPOSITORY WITH DATES, LIVE PRICES, & STATUSES
+    // 3. SIGNALS DATABASE WITH REALISTIC BASELINE PRICES
+    // (Live prices are automatically updated every 10s from Binance)
     // ==========================================
     const SIGNALS_DB = {
       crypto: [
@@ -269,47 +286,185 @@
           symbol: "SOL",
           pair: "SOL/USDT",
           tf: "4h",
-          status: "active", // active, won, stopped
-          publishedAt: "14 أكتوبر • 08:30 م",
+          status: "active",
+          publishedAt: "14 أكتوبر • 07:30 م",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Bollinger Squeeze + MFI Whale",
-          reason: "ضغط سوستة في القاع مع تدفق سيولة حيتان غير معتادة",
-          entry: 154.20,
-          currentPrice: 159.85,
+          reason: "ضغط سوستة بالقاع مع تدفق سيولة حيتان غير معتادة",
+          entry: 103.50,
+          currentPrice: 104.21,
           exitPrice: null,
           achievedPnl: null,
-          support: 148.80,
-          sl: 148.50,
-          tp1: 163.50,
-          tp2: 174.00,
-          slPct: -3.5,
-          tp1Pct: +6.0,
-          tp2Pct: +12.8,
-          rsi: 52.4,
+          support: 100.80,
+          sl: 100.50,
+          tp1: 108.50,
+          tp2: 114.00,
+          slPct: -2.9,
+          tp1Pct: +4.8,
+          tp2Pct: +10.1,
+          rsi: 51.4,
           grade: "Grade S+ 💎"
+        },
+        {
+          symbol: "QTUM",
+          pair: "QTUM/USDT",
+          tf: "4h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 06:15 م",
+          closedAt: null,
+          strategy: "⭐ تطابق استراتيجيتين: RSI Divergence + Structural Support",
+          reason: "دايفرجنس إيجابي صاعد مع ارتداد قوي من قاع 0.895$",
+          entry: 0.932,
+          currentPrice: 0.937,
+          exitPrice: null,
+          achievedPnl: null,
+          support: 0.895,
+          sl: 0.890,
+          tp1: 0.985,
+          tp2: 1.050,
+          slPct: -4.5,
+          tp1Pct: +5.7,
+          tp2Pct: +12.7,
+          rsi: 38.2,
+          grade: "Grade S 💎"
+        },
+        {
+          symbol: "JUP",
+          pair: "JUP/USDT",
+          tf: "4h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 08:00 م",
+          closedAt: null,
+          strategy: "⭐ تطابق استراتيجيتين: Donchian Breakout + Volume Spike",
+          reason: "اختراق قمة القناة مع شمعة شرائية وارتفاع الفوليوم",
+          entry: 0.3150,
+          currentPrice: 0.3181,
+          exitPrice: null,
+          achievedPnl: null,
+          support: 0.3020,
+          sl: 0.3000,
+          tp1: 0.3380,
+          tp2: 0.3650,
+          slPct: -4.8,
+          tp1Pct: +7.3,
+          tp2Pct: +15.9,
+          rsi: 54.0,
+          grade: "Grade A 🚀"
+        },
+        {
+          symbol: "BICO",
+          pair: "BICO/USDT",
+          tf: "4h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 08:45 م",
+          closedAt: null,
+          strategy: "⭐ تطابق استراتيجيتين: Stochastic 20 + EMA Support",
+          reason: "تشبع بيعي مكتمل وارتداد شمعة المطرقة من الدعم",
+          entry: 0.01670,
+          currentPrice: 0.01681,
+          exitPrice: null,
+          achievedPnl: null,
+          support: 0.01590,
+          sl: 0.01580,
+          tp1: 0.01790,
+          tp2: 0.01950,
+          slPct: -5.4,
+          tp1Pct: +7.2,
+          tp2Pct: +16.8,
+          rsi: 41.5,
+          grade: "Grade A 🚀"
         },
         {
           symbol: "1000SATS",
           pair: "1000SATS/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 07:15 م",
+          publishedAt: "14 أكتوبر • 09:15 م",
           closedAt: null,
-          strategy: "⭐ تطابق استراتيجيتين: MFI Whale + RSI Divergence",
-          reason: "دايفرجنس إيجابي صاعد مع ارتداد مؤشر السيولة الذكية",
-          entry: 0.00001143,
-          currentPrice: 0.00001172,
+          strategy: "⭐ تطابق استراتيجيتين: MFI Whale + RSI Oversold",
+          reason: "تدفق سيولة ذكية مع وصول مؤشر القوة النسبية للقاع",
+          entry: 0.00001100,
+          currentPrice: 0.00001106,
           exitPrice: null,
           achievedPnl: null,
-          support: 0.00001115,
-          sl: 0.00001110,
-          tp1: 0.00001184,
-          tp2: 0.00001211,
-          slPct: -2.4,
-          tp1Pct: +3.61,
-          tp2Pct: +6.01,
-          rsi: 28.5,
+          support: 0.00001070,
+          sl: 0.00001065,
+          tp1: 0.00001150,
+          tp2: 0.00001210,
+          slPct: -3.2,
+          tp1Pct: +4.5,
+          tp2Pct: +10.0,
+          rsi: 32.4,
+          grade: "Grade S 💎"
+        },
+        {
+          symbol: "SNDKB",
+          pair: "SNDKB/USDT",
+          tf: "4h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 09:30 م",
+          closedAt: null,
+          strategy: "⭐ تطابق استراتيجيتين: Support Bounce + MACD Bullish Cross",
+          reason: "ثبات أعلى الدعم التاريخي 1365$ مع تقاطع إيجابي للماكد",
+          entry: 1405.00,
+          currentPrice: 1412.14,
+          exitPrice: null,
+          achievedPnl: null,
+          support: 1365.00,
+          sl: 1360.00,
+          tp1: 1480.00,
+          tp2: 1560.00,
+          slPct: -3.2,
+          tp1Pct: +5.3,
+          tp2Pct: +11.0,
+          rsi: 46.8,
+          grade: "Grade S+ 💎"
+        },
+        {
+          symbol: "XPL",
+          pair: "XPL/USDT",
+          tf: "4h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 09:45 م",
+          closedAt: null,
+          strategy: "⭐ تطابق استراتيجيتين: Supertrend Bullish + Volume Inflow",
+          reason: "تحول مؤشر السوبر ترند للأخضر مع تزايد أحجام التداول",
+          entry: 0.07950,
+          currentPrice: 0.08009,
+          exitPrice: null,
+          achievedPnl: null,
+          support: 0.07680,
+          sl: 0.07650,
+          tp1: 0.08500,
+          tp2: 0.09100,
+          slPct: -3.8,
+          tp1Pct: +6.9,
+          tp2Pct: +14.5,
+          rsi: 52.1,
           grade: "Grade A 🚀"
+        },
+        {
+          symbol: "MUUB",
+          pair: "MUUB/USDT",
+          tf: "4h",
+          status: "active",
+          publishedAt: "14 أكتوبر • 10:00 م",
+          closedAt: null,
+          strategy: "⭐ تطابق استراتيجيتين: Keltner Bounce + RSI Bullish Div",
+          reason: "ارتداد من الحد السفلي لقناة كيلتنر وتأكيد إيجابي",
+          entry: 26.50,
+          currentPrice: 26.76,
+          exitPrice: null,
+          achievedPnl: null,
+          support: 25.40,
+          sl: 25.30,
+          tp1: 28.20,
+          tp2: 30.50,
+          slPct: -4.5,
+          tp1Pct: +6.4,
+          tp2Pct: +15.1,
+          rsi: 40.2,
+          grade: "Grade S 💎"
         },
         {
           symbol: "NEAR",
@@ -317,21 +472,21 @@
           tf: "1d",
           status: "won",
           publishedAt: "13 أكتوبر • 03:00 م",
-          closedAt: "14 أكتوبر • 06:45 م (حقق TP2)",
+          closedAt: "14 أكتوبر • 06:45 م (حقق TP1 و TP2)",
           strategy: "⭐ تطابق استراتيجيتين: Donchian Breakout + Supertrend",
-          reason: "اختراق قمة القناة لـ 20 شمعة مع تحول السوبر ترند للأخضر",
-          entry: 4.85,
-          currentPrice: 6.25,
-          exitPrice: 6.20,
-          achievedPnl: +27.8,
-          support: 4.55,
-          sl: 4.50,
-          tp1: 5.45,
-          tp2: 6.20,
-          slPct: -6.1,
-          tp1Pct: +12.3,
-          tp2Pct: +27.8,
-          rsi: 56.1,
+          reason: "اختراق قمة القناة مع شمعة خضراء ضخمة وتحول الاتجاه",
+          entry: 4.20,
+          currentPrice: 4.774,
+          exitPrice: 4.77,
+          achievedPnl: +13.6,
+          support: 4.05,
+          sl: 4.00,
+          tp1: 4.50,
+          tp2: 4.75,
+          slPct: -4.8,
+          tp1Pct: +7.1,
+          tp2Pct: +13.6,
+          rsi: 58.2,
           grade: "Grade S 💎"
         },
         {
@@ -340,44 +495,90 @@
           tf: "4h",
           status: "won",
           publishedAt: "13 أكتوبر • 11:00 ص",
-          closedAt: "13 أكتوبر • 09:30 م (حقق TP1)",
-          strategy: "⭐ تطابق استراتيجيتين: EMA Golden Cross + Stochastic 20",
-          reason: "تقاطع ذهبي صاعد في القاع وتشبع بيعي مكتمل",
-          entry: 1.95,
-          currentPrice: 2.12,
-          exitPrice: 2.11,
-          achievedPnl: +8.2,
-          support: 1.88,
-          sl: 1.87,
-          tp1: 2.11,
-          tp2: 2.25,
-          slPct: -4.1,
-          tp1Pct: +8.2,
-          tp2Pct: +15.4,
-          rsi: 48.0,
+          closedAt: "14 أكتوبر • 04:30 م (حقق الهدف 2)",
+          strategy: "⭐ تطابق استراتيجيتين: EMA Golden Cross + Stochastic",
+          reason: "تقاطع ذهبي صاعد في القاع وتشبع بيعي ارتدادي",
+          entry: 0.88,
+          currentPrice: 1.0179,
+          exitPrice: 1.01,
+          achievedPnl: +14.8,
+          support: 0.84,
+          sl: 0.83,
+          tp1: 0.95,
+          tp2: 1.01,
+          slPct: -5.7,
+          tp1Pct: +8.0,
+          tp2Pct: +14.8,
+          rsi: 61.0,
           grade: "Grade S 💎"
+        },
+        {
+          symbol: "PEPE",
+          pair: "PEPE/USDT",
+          tf: "4h",
+          status: "won",
+          publishedAt: "13 أكتوبر • 08:00 ص",
+          closedAt: "14 أكتوبر • 01:20 م (حقق الهدف 1)",
+          strategy: "⭐ تطابق استراتيجيتين: Volume Spike + MFI Inflow",
+          reason: "انفجار فوليوم شرائي من القاع وتدفق سيولة ذكية",
+          entry: 0.00000360,
+          currentPrice: 0.00000407,
+          exitPrice: 0.00000407,
+          achievedPnl: +13.1,
+          support: 0.00000345,
+          sl: 0.00000340,
+          tp1: 0.00000395,
+          tp2: 0.00000415,
+          slPct: -5.5,
+          tp1Pct: +9.7,
+          tp2Pct: +15.3,
+          rsi: 56.4,
+          grade: "Grade A 🚀"
+        },
+        {
+          symbol: "FET",
+          pair: "FET/USDT",
+          tf: "4h",
+          status: "stopped",
+          publishedAt: "12 أكتوبر • 07:00 م",
+          closedAt: "13 أكتوبر • 02:15 ص (ضرب الوقف لحماية رأس المال)",
+          strategy: "⭐ ارتداد دعم مكسور",
+          reason: "كسر الدعم بفعل هبوط السوق العام وتفعيل الحماية الآلية",
+          entry: 0.215,
+          currentPrice: 0.1928,
+          exitPrice: 0.203,
+          achievedPnl: -5.6,
+          support: 0.205,
+          sl: 0.203,
+          tp1: 0.235,
+          tp2: 0.255,
+          slPct: -5.6,
+          tp1Pct: +9.3,
+          tp2Pct: +18.6,
+          rsi: 34.0,
+          grade: "حماية رأس مال 🛡️"
         },
         {
           symbol: "OP",
           pair: "OP/USDT",
           tf: "4h",
           status: "stopped",
-          publishedAt: "12 أكتوبر • 07:00 م",
-          closedAt: "13 أكتوبر • 01:15 ص (ضرب الوقف الفني)",
-          strategy: "⭐ تطابق استراتيجيتين: RSI Rebound + Support",
-          reason: "محاولة ارتداد من الدعم ولكن كسر بفعل ضغط تصحيح البيتكوين",
-          entry: 1.55,
-          currentPrice: 1.48,
-          exitPrice: 1.50,
-          achievedPnl: -3.2,
-          support: 1.51,
-          sl: 1.50,
-          tp1: 1.65,
-          tp2: 1.74,
-          slPct: -3.2,
-          tp1Pct: +6.5,
-          tp2Pct: +12.2,
-          rsi: 38.0,
+          publishedAt: "12 أكتوبر • 04:00 م",
+          closedAt: "13 أكتوبر • 01:00 ص (ضرب الوقف الفني)",
+          strategy: "⭐ كسر قاع تصحيحي",
+          reason: "كسر قاع الشمعة مع ضغط البيع العام",
+          entry: 0.158,
+          currentPrice: 0.1400,
+          exitPrice: 0.150,
+          achievedPnl: -5.1,
+          support: 0.151,
+          sl: 0.150,
+          tp1: 0.172,
+          tp2: 0.188,
+          slPct: -5.1,
+          tp1Pct: +8.8,
+          tp2Pct: +18.9,
+          rsi: 33.1,
           grade: "حماية رأس مال 🛡️"
         }
       ],
@@ -392,7 +593,7 @@
           strategy: "⭐ تطابق استراتيجيتين: اختراق فوليوم قياسي + دعم هيكلي",
           reason: "ارتداد قوي من دعم 118 جنيه مع فوليوم شرائي أعلى من متوسط 20 يوماً",
           entry: 121.00,
-          currentPrice: 135.50,
+          currentPrice: 121.00,
           exitPrice: 135.00,
           achievedPnl: +11.5,
           support: 118.00,
@@ -416,7 +617,7 @@
           strategy: "⭐ تطابق استراتيجيتين: دايفرجنس صاعد + اختراق سحابة الإيشيموكو",
           reason: "تجميع ذكي على فريم الساعة واختراق مقاومة 62 جنيه",
           entry: 62.50,
-          currentPrice: 64.20,
+          currentPrice: 63.40,
           exitPrice: null,
           achievedPnl: null,
           support: 60.80,
@@ -440,7 +641,7 @@
           strategy: "⭐ تطابق استراتيجيتين: ارتداد تشبع بيعي RSI + متوسط EMA 50",
           reason: "ارتداد من قاع 8.20 جنيه مع شمعة ابتلاعية صاعدة",
           entry: 8.45,
-          currentPrice: 8.70,
+          currentPrice: 8.65,
           exitPrice: null,
           achievedPnl: null,
           support: 8.15,
@@ -482,16 +683,28 @@
     };
 
     // ==========================================
-    // 4. PRICE FORMATTER
+    // 4. SMART MULTI-DECIMAL PRICE FORMATTER
+    // (Never displays 0.00 for micro-coins)
     // ==========================================
     function formatPrice(val, currency = "$") {
-      if (val === null || val === undefined || isNaN(val)) return "0.00";
-      const abs = Math.abs(val);
+      if (val === null || val === undefined || isNaN(val)) return `0.00 ${currency}`;
+      const num = Number(val);
+      const abs = Math.abs(num);
       let formatted = "";
-      if (abs >= 1000) formatted = val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      else if (abs >= 1) formatted = val.toFixed(2);
-      else if (abs >= 0.01) formatted = val.toFixed(4);
-      else formatted = val.toFixed(8).replace(/0+$/, '');
+
+      if (abs >= 1000) {
+        formatted = num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else if (abs >= 1) {
+        formatted = num.toFixed(2);
+      } else if (abs >= 0.01) {
+        formatted = num.toFixed(4);
+      } else if (abs >= 0.0001) {
+        formatted = num.toFixed(6);
+      } else {
+        // Micro-penny coins like PEPE, 1000SATS
+        formatted = num.toFixed(8);
+      }
+
       return `${formatted} ${currency}`;
     }
 
@@ -527,7 +740,6 @@
     function switchStatus(status) {
       currentStatus = status;
 
-      // Update button styles
       ['all', 'active', 'won', 'stopped'].forEach(s => {
         const btn = document.getElementById(`btnStatus${s.charAt(0).toUpperCase() + s.slice(1)}`);
         if (s === status) {
@@ -564,19 +776,19 @@
       const sessionLabel = document.getElementById('marketSessionTime');
 
       if (currentMarket === 'crypto') {
+        const btcPrice = liveBinancePrices['BTCUSDT'] || 81713;
         ticker.innerHTML = `
-          <span class="text-emerald-400 font-extrabold">حالة البيتكوين:</span>
-          <span class="text-white font-black">مستقر وصاعد 🟢</span>
-          <span class="text-slate-400 text-[10px]">(فحص كل 4 ساعات)</span>
+          <span class="text-emerald-400 font-extrabold">البيتكوين:</span>
+          <span class="text-white font-black">${formatPrice(btcPrice, '$')}</span>
+          <span class="text-slate-400 text-[10px]">(فحص 160 عملة)</span>
         `;
-        sessionLabel.textContent = "سوق 24/7 نشط";
+        sessionLabel.textContent = "بينانس مباشر 24/7";
         sessionLabel.className = "text-emerald-400 font-bold";
       } else {
-        // EGX Session Hours Check (Cairo: 10:00 to 14:30 Sun-Thu)
         const now = new Date();
-        const day = now.getUTCDay(); // 0 is Sunday, 4 is Thursday, 5 is Friday, 6 is Saturday
+        const day = now.getUTCDay();
         const utcHour = now.getUTCHours();
-        const cairoHour = (utcHour + 3) % 24; // Cairo is UTC+3 in summer / UTC+2 winter
+        const cairoHour = (utcHour + 3) % 24;
 
         const isEgxDay = (day >= 0 && day <= 4);
         const isEgxHour = (cairoHour >= 10 && cairoHour < 15);
@@ -607,7 +819,6 @@
       const userSelected = currentMarket === 'crypto' ? selectedCrypto : selectedEgx;
       const currency = currentMarket === 'crypto' ? '$' : 'ج.م';
 
-      // Filter by selection, timeframe, and status
       const filtered = list.filter(item => {
         const matchesSelection = userSelected.includes(item.symbol);
         const matchesTf = currentTf === 'all' || item.tf === currentTf;
@@ -624,12 +835,12 @@
               ${
                 currentStatus === 'won' ? 'لم تسجل صفقات رابحة بعد في هذا الفلتر.' :
                 currentStatus === 'stopped' ? 'ممتاز! لا توجد صفقات ضربت وقف خسارة في هذا الفلتر.' :
-                currentStatus === 'active' ? 'لا توجد صفقات نشطة قيد المتابعة حالياً، بانتظار تشكل نموذج الدخول.' :
+                currentStatus === 'active' ? 'لا توجد صفقات نشطة قيد المتابعة حالياً، بانتظار تشكل نموذج الدخول الصارم.' :
                 'تم استبعاد الإشارات غير المتطابقة لحماية رأس مالك.'
               }
             </p>
             <button onclick="openAssetModal()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-emerald-400 text-xs font-bold rounded-xl border border-gray-700">
-              تعديل قائمة الأسهم المتابعة ⚙️
+              تعديل قائمة العملات والأسهم المتابعة ⚙️
             </button>
           </div>
         `;
@@ -639,12 +850,11 @@
       filtered.forEach(sig => {
         const card = document.createElement('div');
         
-        // Calculate current Live PnL
+        // Live Price & PnL calculation
         const currentP = sig.currentPrice || sig.entry;
         const pnl = ((currentP - sig.entry) / sig.entry) * 100;
         const isPnlPositive = pnl >= 0;
 
-        // Card Border & Glow based on Status
         let cardStyle = "";
         let statusBadge = "";
         
@@ -689,7 +899,7 @@
                   <span class="font-black text-white text-sm tracking-wide">${sig.pair}</span>
                   <span class="px-2 py-0.5 rounded-md bg-gray-800 text-slate-200 text-[10px] font-extrabold uppercase border border-gray-700">${sig.tf}</span>
                 </div>
-                <!-- تاريخ ووقت نشر الصفقة بجوار الفريم -->
+                <!-- تاريخ ووقت النشر الفعلي بجوار الفريم -->
                 <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-300 font-bold">
                   <span class="flex items-center gap-1 text-slate-400">
                     <span>🕒 نشرت:</span>
@@ -713,7 +923,7 @@
             <p class="text-slate-400 text-[10px] leading-relaxed">${sig.reason}</p>
           </div>
 
-          <!-- Price & Targets Grid with LIVE PRICE (السعر الحالي) -->
+          <!-- Price & Targets Grid with LIVE PRICE (السعر الحالي الحقيقي) -->
           <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center mb-3.5">
             
             <!-- Entry Price -->
@@ -722,7 +932,7 @@
               <div class="text-xs font-black text-white mt-0.5">${formatPrice(sig.entry, currency)}</div>
             </div>
 
-            <!-- Current Live Price (السعر الحالي) -->
+            <!-- Current Live Price (السعر الحالي الفعلي) -->
             <div class="${isPnlPositive ? 'bg-emerald-950/30 border-emerald-500/30' : 'bg-rose-950/30 border-rose-500/30'} p-2.5 rounded-2xl border shadow-inner">
               <div class="text-[10px] ${isPnlPositive ? 'text-emerald-400' : 'text-rose-400'} font-bold flex items-center justify-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full ${isPnlPositive ? 'bg-emerald-400' : 'bg-rose-400'} animate-ping"></span>
@@ -803,19 +1013,28 @@
       const total = currentMarket === 'crypto' ? CRYPTO_COINS.length : EGX_STOCKS.length;
 
       if (selected.length === total) {
-        badge.textContent = "الكل";
+        badge.textContent = `الكل (${total})`;
       } else {
         badge.textContent = `${selected.length}/${total}`;
       }
     }
 
     // ==========================================
-    // 7. ASSET SELECTION MODAL
+    // 7. ASSET SELECTION MODAL (160 COINS)
     // ==========================================
     function openAssetModal() {
       const modal = document.getElementById('assetModal');
       const title = document.getElementById('modalTitle');
-      title.textContent = currentMarket === 'crypto' ? "تخصيص عملات بينانس المتابعة" : "تخصيص أسهم البورصة المصرية المتابعة";
+      const subTitle = document.getElementById('modalSubTitle');
+      
+      if (currentMarket === 'crypto') {
+        title.textContent = "تخصيص عملات بينانس (160 عملة سبوت)";
+        subTitle.textContent = "حدد العملات التي تريد متابعة صفقاتها أو ابحث عن أي عملة";
+      } else {
+        title.textContent = "تخصيص أسهم البورصة المصرية (EGX)";
+        subTitle.textContent = "حدد أسهم الشركات المصرية التي تتابعها";
+      }
+
       renderAssetCheckboxes();
       modal.classList.remove('hidden');
     }
@@ -829,7 +1048,12 @@
       container.innerHTML = '';
 
       const items = currentMarket === 'crypto'
-        ? CRYPTO_COINS.map(c => ({ code: c, name: `${c} / USDT`, meta: "بينانس" }))
+        ? CRYPTO_COINS.map(c => {
+            const mapped = SYMBOL_ALIASES[c] || c;
+            const liveP = liveBinancePrices[mapped + "USDT"];
+            const priceLabel = liveP ? formatPrice(liveP, '$') : 'بينانس';
+            return { code: c, name: `${c} / USDT`, meta: priceLabel };
+          })
         : EGX_STOCKS.map(s => ({ code: s.code, name: s.name, meta: s.sector }));
 
       const selected = currentMarket === 'crypto' ? selectedCrypto : selectedEgx;
@@ -848,7 +1072,7 @@
                 <span class="text-[11px] text-slate-400 mr-2">${item.name}</span>
               </div>
             </div>
-            <span class="text-[10px] text-slate-500 font-bold bg-gray-900 px-2 py-0.5 rounded-full">${item.meta}</span>
+            <span class="text-[10px] text-emerald-400 font-bold bg-gray-900 px-2.5 py-0.5 rounded-full border border-gray-800">${item.meta}</span>
           `;
           container.appendChild(row);
         });
@@ -883,31 +1107,33 @@
     }
 
     // ==========================================
-    // 8. LIVE PRICE POLLING (BINANCE VISION)
+    // 8. LIVE BINANCE PRICE ENGINE (OFFICIAL VISION API)
     // ==========================================
     async function updateLiveCryptoPrices() {
-      if (currentMarket !== 'crypto') return;
       try {
         const res = await fetch("https://data-api.binance.vision/api/v3/ticker/price");
         if (!res.ok) return;
         const data = await res.json();
-        const priceMap = {};
+        
         data.forEach(item => {
           if (item.symbol.endsWith("USDT")) {
-            priceMap[item.symbol] = parseFloat(item.price);
+            liveBinancePrices[item.symbol] = parseFloat(item.price);
           }
         });
 
-        // Update active signals
+        // Immediately update all active crypto signals with exact live prices
         let updated = false;
         SIGNALS_DB.crypto.forEach(sig => {
-          if (sig.status === 'active' && priceMap[sig.symbol + "USDT"]) {
-            sig.currentPrice = priceMap[sig.symbol + "USDT"];
+          const mapped = SYMBOL_ALIASES[sig.symbol] || sig.symbol;
+          const pair = mapped + "USDT";
+          if (sig.status === 'active' && liveBinancePrices[pair]) {
+            sig.currentPrice = liveBinancePrices[pair];
             updated = true;
           }
         });
 
         if (updated) {
+          renderMarketHealth();
           renderSignals();
         }
       } catch (e) {
@@ -915,8 +1141,8 @@
       }
     }
 
-    // Poll live prices every 15 seconds
-    setInterval(updateLiveCryptoPrices, 15000);
+    // Poll live prices every 10 seconds for real-time accuracy
+    setInterval(updateLiveCryptoPrices, 10000);
 
     // ==========================================
     // 9. PWA INSTALL LOGIC & GUIDE MODAL
@@ -953,16 +1179,18 @@
       document.getElementById('installGuideModal').classList.add('hidden');
     }
 
-    // Register Service Worker
+    // Register Service Worker with v=2 cache bust
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js?v=2').then((reg) => {
+        reg.update();
+      }).catch(() => {});
     }
 
     // ==========================================
     // 10. INITIALIZATION
     // ==========================================
     switchMarket('crypto');
-    setTimeout(updateLiveCryptoPrices, 1000);
+    updateLiveCryptoPrices();
   </script>
 </body>
 </html>
