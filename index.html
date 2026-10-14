@@ -132,6 +132,56 @@
     </button>
   </div>
 
+  <!-- SEARCH BY COIN & DATE FILTER BAR -->
+  <div class="px-4 pt-3 pb-1 max-w-2xl mx-auto w-full space-y-2">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <!-- 1. Coin Name Search Input -->
+      <div class="relative">
+        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
+        <input 
+          type="text" 
+          id="coinSearchInput" 
+          oninput="handleCoinSearch(this.value)" 
+          placeholder="فلترة باسم العملة (مثل BICO, SOL, BTC, NOT)..." 
+          class="w-full bg-gray-900/90 border border-gray-800 rounded-xl pr-8 pl-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all shadow-inner"
+        >
+        <button 
+          id="clearSearchBtn" 
+          onclick="clearCoinSearch()" 
+          class="hidden absolute inset-y-0 left-2.5 flex items-center text-slate-400 hover:text-white text-xs font-bold"
+        >✕</button>
+      </div>
+
+      <!-- 2. Date / Session Filter Dropdown -->
+      <div class="relative">
+        <select 
+          id="dateFilterSelect" 
+          onchange="handleDateFilter(this.value)" 
+          class="w-full bg-gray-900/90 border border-gray-800 rounded-xl pr-3 pl-8 py-2 text-xs text-slate-200 font-bold focus:outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+        >
+          <option value="all">📅 كل التواريخ</option>
+          <option value="11pm">🔥 شمعة 11:00 م (اليوم 14 أكتوبر)</option>
+          <option value="today">📅 كل جلسات اليوم (14 أكتوبر)</option>
+          <option value="earlier">🕒 جلسات اليوم السابقة (07:00 م - 10:00 م)</option>
+          <option value="oct13">📅 أمس (13 أكتوبر)</option>
+          <option value="oct12">📅 سابق (12 أكتوبر)</option>
+        </select>
+        <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400 text-[10px]">▼</span>
+      </div>
+    </div>
+
+    <!-- Active Filter Counter / Reset Bar -->
+    <div id="filterStatusPill" class="flex items-center justify-between text-[11px] bg-gray-900/80 border border-gray-800 px-3 py-1.5 rounded-xl text-slate-300">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span id="filterStatusText">عرض الصفقات...</span>
+      </div>
+      <button onclick="resetAllFilters()" class="text-xs text-slate-400 hover:text-rose-400 font-bold underline">
+        إعادة تعيين الكل ↺
+      </button>
+    </div>
+  </div>
+
   <!-- MAIN SIGNALS FEED CONTAINER -->
   <main class="flex-1 p-4 space-y-3.5 max-w-2xl mx-auto w-full" id="signalsContainer">
     <!-- Signal Cards injected here -->
@@ -273,6 +323,11 @@
     let currentStatus = 'all';    // 'all', 'active', 'won', 'stopped'
     let currentTf = 'all';        // 'all', '4h', '1d' for crypto | 'all', '1h', '1d' for egx
     let selectedCrypto = JSON.parse(localStorage.getItem('selected_crypto')) || [...CRYPTO_COINS];
+    if (!localStorage.getItem('selected_crypto_v160') || selectedCrypto.length < CRYPTO_COINS.length) {
+      selectedCrypto = [...CRYPTO_COINS];
+      localStorage.setItem('selected_crypto', JSON.stringify(selectedCrypto));
+      localStorage.setItem('selected_crypto_v160', 'true');
+    }
     let selectedEgx = JSON.parse(localStorage.getItem('selected_egx')) || EGX_STOCKS.map(s => s.code);
     let liveBinancePrices = {};   // Cached live prices directly from Binance
 
@@ -287,7 +342,9 @@
           pair: "BICO/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: MFI Whale + RSI Bullish Divergence",
           reason: "دايفرجنس إيجابي صاعد مع تدفق سيولة الحيتان في القاع وتأكيد شمعة المطرقة",
@@ -310,7 +367,9 @@
           pair: "IMX/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق 3 استراتيجيات: Aroon Deep Dip + Stoch RSI + MFI Whale",
           reason: "قاع ثلاثي مكتمل مع انعكاس مؤشر آرون وتدفق سيولة قوية",
@@ -333,7 +392,9 @@
           pair: "FET/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Stochastic RSI Oversold + MFI Whale",
           reason: "تشبع بيعي حاد في القاع مع بدء دخول سيولة الحيتان الذكية",
@@ -356,7 +417,9 @@
           pair: "NOT/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Aroon Deep Dip + Stochastic RSI",
           reason: "قاع هابط استنفد البيع مع ارتداد مؤشر القوة من منطقة التشبع",
@@ -379,7 +442,9 @@
           pair: "THETA/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Stochastic RSI + MFI Whale",
           reason: "ارتداد من دعم 0.194$ وتزايد التدفقات الإيجابية",
@@ -402,7 +467,9 @@
           pair: "MANA/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Stochastic RSI + MFI Whale",
           reason: "شمعة ابتلاعية على دعم 0.089$ وتأكيد تشبع بيعي",
@@ -425,7 +492,9 @@
           pair: "DOGE/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Stochastic RSI + MFI Whale",
           reason: "ارتداد قوي من دعم 0.0816$ مع تراكم سيولة إيجابية",
@@ -448,7 +517,9 @@
           pair: "SUPER/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Aroon Deep Dip + Stochastic RSI",
           reason: "انعكاس صاعد من قاع قناة هابطة",
@@ -471,7 +542,9 @@
           pair: "RED/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Stochastic RSI + MFI Whale",
           reason: "انفجار سيولة شرائية من قاع 0.150$ ونموذج انعكاسي",
@@ -494,7 +567,9 @@
           pair: "EPIC/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Stochastic RSI + MFI Whale",
           reason: "ارتداد قوي من دعم 0.259$ وتأكيد كسر الاتجاه الهابط",
@@ -517,7 +592,9 @@
           pair: "ERA/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Aroon Deep Dip + MFI Whale",
           reason: "ثبات أعلى دعم 0.060$ وبدء صعود مؤشرات الحيتان",
@@ -540,7 +617,9 @@
           pair: "BNB/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Stochastic RSI + MFI Whale",
           reason: "ارتداد قيادي من دعم 722$ وتأكيد اتجاه صاعد",
@@ -563,7 +642,9 @@
           pair: "BTC/USDT",
           tf: "4h",
           status: "active",
-          publishedAt: "14 أكتوبر • 11:07 م (إغلاق شمعة 4H)",
+          is11pm: true,
+          entry_date: "2026-10-14 20:14",
+          publishedAt: "14 أكتوبر • 11:14 م (بتوقيت مصر)",
           closedAt: null,
           strategy: "⭐ تطابق استراتيجيتين: Stochastic RSI + MFI Whale",
           reason: "ثبات إيجابي أعلى دعم 81,500$ مع استقرار مؤشرات السيولة",
@@ -1063,6 +1144,44 @@
       }
     }
 
+    let coinSearchQuery = '';
+    let selectedDateFilter = 'all';
+
+    function handleCoinSearch(val) {
+      coinSearchQuery = (val || '').trim().toUpperCase();
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (clearBtn) {
+        if (coinSearchQuery.length > 0) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+      renderSignals();
+    }
+
+    function clearCoinSearch() {
+      const inp = document.getElementById('coinSearchInput');
+      if (inp) inp.value = '';
+      coinSearchQuery = '';
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      renderSignals();
+    }
+
+    function handleDateFilter(val) {
+      selectedDateFilter = val || 'all';
+      renderSignals();
+    }
+
+    function resetAllFilters() {
+      clearCoinSearch();
+      selectedDateFilter = 'all';
+      const sel = document.getElementById('dateFilterSelect');
+      if (sel) sel.value = 'all';
+      currentStatus = 'all';
+      currentTf = 'all';
+      renderTimeframePills();
+      switchStatus('all');
+    }
+
     function renderSignals() {
       const container = document.getElementById('signalsContainer');
       container.innerHTML = '';
@@ -1073,27 +1192,76 @@
       const currency = currentMarket === 'crypto' ? '$' : 'ج.م';
 
       const filtered = list.filter(item => {
-        const matchesSelection = userSelected.includes(item.symbol);
+        // 1. Timeframe Filter
         const matchesTf = currentTf === 'all' || item.tf === currentTf;
+
+        // 2. Status Tab Filter (الكل, نشطة, رابحة, ستوب)
         const matchesStatus = currentStatus === 'all' || item.status === currentStatus;
-        return matchesSelection && matchesTf && matchesStatus;
+
+        // 3. Coin Name Search Filter (Searches across all tabs)
+        const matchesCoin = !coinSearchQuery || 
+                            (item.symbol && item.symbol.toUpperCase().includes(coinSearchQuery)) || 
+                            (item.pair && item.pair.toUpperCase().includes(coinSearchQuery));
+
+        // 4. Date / Session Filter (Searches across all tabs)
+        let matchesDate = true;
+        const pub = (item.publishedAt || '');
+        const ent = (item.entry_date || '');
+
+        if (selectedDateFilter === '11pm') {
+          matchesDate = item.is11pm || pub.includes('11:0') || pub.includes('11:1') || ent.includes('20:1') || ent.includes('23:1');
+        } else if (selectedDateFilter === 'today') {
+          matchesDate = pub.includes('14 أكتوبر') || ent.includes('2026-10-14') || item.is11pm;
+        } else if (selectedDateFilter === 'earlier') {
+          matchesDate = (pub.includes('14 أكتوبر') || ent.includes('2026-10-14')) && 
+                        !item.is11pm && !pub.includes('11:0') && !pub.includes('11:1') && !ent.includes('20:1') && !ent.includes('23:1');
+        } else if (selectedDateFilter === 'oct13') {
+          matchesDate = pub.includes('13 أكتوبر') || ent.includes('2026-10-13');
+        } else if (selectedDateFilter === 'oct12') {
+          matchesDate = pub.includes('12 أكتوبر') || ent.includes('2026-10-12');
+        }
+
+        // 5. Watchlist Filter (Direct search bypasses custom watchlist restriction!)
+        const matchesSelection = coinSearchQuery.length > 0 ? true : userSelected.includes(item.symbol);
+
+        return matchesTf && matchesStatus && matchesCoin && matchesDate && matchesSelection;
       });
+
+      // Update Filter Status Banner Text
+      const statusText = document.getElementById('filterStatusText');
+      if (statusText) {
+        let details = [];
+        if (currentStatus !== 'all') {
+          const tabNames = { active: '⚡ نشطة', won: '🏆 رابحة', stopped: '🛑 ستوب' };
+          details.push(`القسم: ${tabNames[currentStatus] || currentStatus}`);
+        }
+        if (coinSearchQuery) details.push(`العملة: "${coinSearchQuery}"`);
+        if (selectedDateFilter !== 'all') {
+          const dateNames = { 
+            '11pm': '🔥 شمعة 11:00 م', 
+            'today': '📅 اليوم 14 أكتوبر',
+            'earlier': '🕒 جلسات سابقة اليوم', 
+            'oct13': '📅 أمس 13 أكتوبر', 
+            'oct12': '📅 12 أكتوبر' 
+          };
+          details.push(`التاريخ: ${dateNames[selectedDateFilter] || selectedDateFilter}`);
+        }
+        if (currentTf !== 'all') details.push(`فريم: ${currentTf.toUpperCase()}`);
+
+        const filterSummary = details.length > 0 ? ` [${details.join(' • ')}]` : '';
+        statusText.textContent = `عرض ${filtered.length} صفقة متطابقة${filterSummary}`;
+      }
 
       if (filtered.length === 0) {
         container.innerHTML = `
           <div class="glass-card rounded-3xl p-8 text-center border border-gray-800 space-y-3">
-            <div class="text-4xl">🛡️</div>
-            <h3 class="text-sm font-extrabold text-white">لا توجد صفقات في هذا التبويب حالياً</h3>
+            <div class="text-4xl">🔍</div>
+            <h3 class="text-sm font-extrabold text-white">لا توجد صفقات مطابقة للفلتر المحدد</h3>
             <p class="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-              ${
-                currentStatus === 'won' ? 'لم تسجل صفقات رابحة بعد في هذا الفلتر.' :
-                currentStatus === 'stopped' ? 'ممتاز! لا توجد صفقات ضربت وقف خسارة في هذا الفلتر.' :
-                currentStatus === 'active' ? 'لا توجد صفقات نشطة قيد المتابعة حالياً، بانتظار تشكل نموذج الدخول الصارم.' :
-                'تم استبعاد الإشارات غير المتطابقة لحماية رأس مالك.'
-              }
+              جرب تغيير كلمة البحث أو اختيار "كل التواريخ" لعرض صفقات أخرى.
             </p>
-            <button onclick="openAssetModal()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-emerald-400 text-xs font-bold rounded-xl border border-gray-700">
-              تعديل قائمة العملات والأسهم المتابعة ⚙️
+            <button onclick="resetAllFilters()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-emerald-400 text-xs font-bold rounded-xl border border-gray-700">
+              إعادة تعيين الفلاتر ↺
             </button>
           </div>
         `;
@@ -1151,6 +1319,7 @@
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span class="font-black text-white text-sm tracking-wide">${sig.pair}</span>
                   <span class="px-2 py-0.5 rounded-md bg-gray-800 text-slate-200 text-[10px] font-extrabold uppercase border border-gray-700">${sig.tf}</span>
+                  ${sig.is11pm ? '<span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black flex items-center gap-1 shadow-sm">🔥 شمعة 11:00 م</span>' : ''}
                 </div>
                 <!-- تاريخ ووقت النشر الفعلي بجوار الفريم -->
                 <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-300 font-bold">
@@ -1442,6 +1611,30 @@
     // ==========================================
     // 10. CLOUD AUTO-SYNC (READS TRADES_DATA.JSON)
     // ==========================================
+    function formatCairoDate(dateStr) {
+      if (!dateStr) return 'اليوم';
+      if (dateStr.includes('أكتوبر') || dateStr.includes('م') || dateStr.includes('ص')) return dateStr;
+      
+      try {
+        const [dPart, tPart] = dateStr.split(' ');
+        if (dPart && tPart) {
+          const [y, m, d] = dPart.split('-').map(Number);
+          const [h, min] = tPart.split(':').map(Number);
+          // Convert UTC to Cairo (UTC + 3)
+          let cairoH = (h + 3) % 24;
+          const period = cairoH >= 12 ? 'م' : 'ص';
+          const dispH = cairoH > 12 ? cairoH - 12 : (cairoH === 0 ? 12 : cairoH);
+          const minPad = min < 10 ? '0' + min : min;
+          const monthNames = { 10: 'أكتوبر', 9: 'سبتمبر', 11: 'نوفمبر', 12: 'ديسمبر' };
+          const monthName = monthNames[m] || 'أكتوبر';
+          return `${d} ${monthName} • ${dispH}:${minPad} ${period} (بتوقيت مصر)`;
+        }
+      } catch (e) {
+        console.warn('date parse fallback:', e);
+      }
+      return dateStr;
+    }
+
     async function loadLiveTradesData() {
       try {
         const res = await fetch('./trades_data.json?t=' + Date.now());
@@ -1453,12 +1646,17 @@
           const sym = t.base || t.symbol.replace('USDT', '');
           const mapped = SYMBOL_ALIASES[sym] || sym;
           const liveP = liveBinancePrices[mapped + 'USDT'] || t.current_price || t.entry_price;
+          const displayTime = formatCairoDate(t.entry_date);
+          const is11 = (t.entry_date && (t.entry_date.includes('20:1') || t.entry_date.includes('23:1') || t.entry_date.includes('20:0'))) || (displayTime && displayTime.includes('11:'));
+
           return {
             symbol: sym,
             pair: `${sym}/USDT`,
             tf: t.timeframe || '4h',
             status: 'active',
-            publishedAt: t.entry_date || 'اليوم',
+            is11pm: is11,
+            entry_date: t.entry_date,
+            publishedAt: displayTime,
             closedAt: null,
             strategy: t.strategy || '⭐ توافق استراتيجيات فنية مؤكدة',
             reason: 'صفقة مؤكدة بتوافق استراتيجيات الحيتان والدعم الهيكلي',
@@ -1474,7 +1672,7 @@
             tp1Pct: Math.abs(t.tp1_pct || 5.0),
             tp2Pct: Math.abs(t.tp2_pct || 10.0),
             rsi: 45.0,
-            grade: 'Grade S 💎'
+            grade: 'Grade S+ 💎'
           };
         });
 
@@ -1486,8 +1684,10 @@
             pair: `${sym}/USDT`,
             tf: t.timeframe || '4h',
             status: isWon ? 'won' : 'stopped',
-            publishedAt: t.entry_date || 'سابقاً',
-            closedAt: t.closed_date ? `${t.closed_date} (${t.result_reason || (isWon ? 'حقق الهدف' : 'ضرب الوقف')})` : null,
+            is11pm: false,
+            entry_date: t.entry_date,
+            publishedAt: formatCairoDate(t.entry_date),
+            closedAt: t.closed_date ? `${formatCairoDate(t.closed_date)} (${t.result_reason || (isWon ? 'حقق الهدف' : 'ضرب الوقف')})` : null,
             strategy: t.strategy || '⭐ توافق استراتيجيات فنية',
             reason: isWon ? 'حققت أهداف النموذج بنجاح' : 'ضربت وقف الخسارة لحماية رأس المال',
             entry: t.entry_price,
@@ -1506,8 +1706,13 @@
           };
         });
 
-        if (activeList.length > 0 || closedList.length > 0) {
-          SIGNALS_DB.crypto = [...activeList, ...closedList];
+        // Retain existing won and stopped trades so won/stopped tabs never get emptied
+        const existingWon = SIGNALS_DB.crypto.filter(s => s.status === 'won');
+        const existingStopped = SIGNALS_DB.crypto.filter(s => s.status === 'stopped');
+        const finalClosed = closedList.length > 0 ? closedList : [...existingWon, ...existingStopped];
+
+        if (activeList.length > 0 || finalClosed.length > 0) {
+          SIGNALS_DB.crypto = [...activeList, ...finalClosed];
           renderSignals();
         }
       } catch (e) {
