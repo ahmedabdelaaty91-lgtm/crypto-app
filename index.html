@@ -464,10 +464,6 @@
     let currentTf = 'all';        // 'all', '4h', '1d' for crypto | 'all', '1h', '1d' for egx
     let selectedShariaFilter = 'all'; // 'all', 'halal', 'non_halal'
 
-    // Audio Alert Settings
-    let soundEnabled = localStorage.getItem('sound_enabled') !== 'false';
-    let selectedSound = localStorage.getItem('alert_sound') || 'kaching';
-
     let selectedCrypto = JSON.parse(localStorage.getItem('selected_crypto')) || [...CRYPTO_COINS];
     if (!localStorage.getItem('selected_crypto_v160') || selectedCrypto.length < CRYPTO_COINS.length) {
       selectedCrypto = [...CRYPTO_COINS];
@@ -2159,9 +2155,14 @@
             const tickers = JSON.parse(event.data);
             if (!Array.isArray(tickers)) return;
 
+            // Fast O(1) set of symbols needed for active cards & benchmark
+            const activeSymbols = new Set(SIGNALS_DB.crypto.filter(s => s.status === 'active').map(s => (SYMBOL_ALIASES[s.symbol] || s.symbol) + 'USDT'));
+            activeSymbols.add('BTCUSDT');
+            activeSymbols.add('ETHUSDT');
+
             let needHealthUpdate = false;
             tickers.forEach(t => {
-              if (t.s && t.s.endsWith('USDT')) {
+              if (activeSymbols.has(t.s)) {
                 const sym = t.s.replace('USDT', '');
                 const newPrice = parseFloat(t.c);
                 liveBinancePrices[t.s] = newPrice;
@@ -2257,9 +2258,9 @@
       document.getElementById('installGuideModal').classList.add('hidden');
     }
 
-    // Register Service Worker with v=3 cache bust
+    // Register Service Worker with v=4 cache bust
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=3').then((reg) => {
+      navigator.serviceWorker.register('./sw.js?v=4').then((reg) => {
         reg.update();
       }).catch(() => {});
     }
