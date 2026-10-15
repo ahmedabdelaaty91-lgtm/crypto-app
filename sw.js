@@ -1,5 +1,5 @@
-// Service Worker for CryptoSniper PWA (Version 3 - Network-First for Instant Updates)
-const CACHE_NAME = 'cryptosniper-v3';
+// Service Worker for CryptoSniper PWA (Version 5 - Network-First for Instant Updates)
+const CACHE_NAME = 'cryptosniper-v5';
 const ASSETS_TO_CACHE = [
   './manifest.json',
   './icon-192.png',
