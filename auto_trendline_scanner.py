@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Auto Trend Lines 4H Scanner (Swing Trade Pros Algorithm)
-يقوم بفحص أزواج بينانس سبوت كل 4 ساعات لرصد لحظة ملامسة السعر لخط الترند الأخضر (الدعم)
-وإرسال إشعار فوري عبر تليجرام مع تحديد نقطة الدخول، وقف الخسارة، والأهداف.
+Auto Trend Lines Multi-Timeframe Scanner (4H & 1D)
+يقوم بفحص أزواج بينانس سبوت على فريم الأربع ساعات (4H) والفريم اليومي (1D)
+لرصد ملامسة السعر لخط الترند الأخضر (الدعم) وإرسال إشعار فوري عبر تليجرام.
 """
 
 import sys
@@ -21,12 +21,14 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-# إعدادات تليجرام الخاصة بك
+# ==========================================
+# ⚙️ الإعدادات العامة (Configuration)
+# ==========================================
 TELEGRAM_BOT_TOKEN = "8913224513:AAHSWPospHVspn49uTG_ifcAdmxBle-iMjg"
 TELEGRAM_CHAT_ID = "7760401819"
 
-# الفريم الزمني المطلوب: 4 ساعات
-TIMEFRAME = "4h"
+# الفريمات المطلوبة: 4 ساعات + اليومي
+TIMEFRAMES = ["4h", "1d"]
 
 # قائمة أشهر أزواج السبوت على بينانس
 WATCHLIST = [
@@ -48,6 +50,10 @@ BINANCE_ENDPOINTS = [
 session = requests.Session()
 session.headers.update({"User-Agent": "Mozilla/5.0"})
 
+
+# ==========================================
+# 📡 جلب بيانات الشموع من بينانس
+# ==========================================
 def fetch_klines(symbol: str, interval: str = "4h", limit: int = 120):
     params = {"symbol": symbol, "interval": interval, "limit": limit}
     for endpoint in BINANCE_ENDPOINTS:
@@ -67,7 +73,11 @@ def fetch_klines(symbol: str, interval: str = "4h", limit: int = 120):
             continue
     return None
 
-def detect_auto_trendline_touch(df: pd.DataFrame, left_bars: int = 7, right_bars: int = 3):
+
+# ==========================================
+# 📐 خوارزمية Auto Trend Lines (خط الدعم الأخضر)
+# ==========================================
+def detect_auto_trendline_touch(df: pd.DataFrame, timeframe: str = "4h", left_bars: int = 7, right_bars: int = 3):
     n = len(df)
     if n < 50:
         return None
@@ -144,10 +154,13 @@ def detect_auto_trendline_touch(df: pd.DataFrame, left_bars: int = 7, right_bars
         tp1_pct = ((tp1 - curr_close) / curr_close) * 100
         tp2_pct = ((tp2 - curr_close) / curr_close) * 100
 
-        if sl_pct > 6.5 or sl_pct < 0.6:
+        # أقصى وقف خسارة مسموح به (6.5% للـ 4H و 9.5% لليومي)
+        max_sl = 9.5 if timeframe == "1d" else 6.5
+        if sl_pct > max_sl or sl_pct < 0.6:
             return None
 
         return {
+            "timeframe": timeframe,
             "green_line_value": green_line_value,
             "entry_price": curr_close,
             "stop_loss": stop_loss,
@@ -161,15 +174,22 @@ def detect_auto_trendline_touch(df: pd.DataFrame, left_bars: int = 7, right_bars
 
     return None
 
+
+# ==========================================
+# 💬 إرسال إشعار تليجرام
+# ==========================================
 def send_telegram_alert(symbol: str, signal_data: dict, bot_token: str, chat_id: str):
     if not bot_token or not chat_id:
         return
 
     clean_symbol = symbol.replace("USDT", "")
+    tf = signal_data.get("timeframe", "4h")
+    tf_text = "يومي (1D) 💎 [سوينج رئيسي]" if tf == "1d" else "4 ساعات (4H) ⚡ [سوينج سريع]"
+
     message = f"""🟢 *تنبيه تريند لاين: ملامسة الخط الأخضر* 🟢
 ━━━━━━━━━━━━━━━━━━━━
 🎯 *العملة:* `#{clean_symbol}` ({symbol})
-⏰ *الفريم:* 4 ساعات (4H)
+⏰ *الفريم:* {tf_text}
 📈 *نوع الترند:* {signal_data['slope_type']}
 ━━━━━━━━━━━━━━━━━━━━
 💵 *سعر الدخول:* `{signal_data['entry_price']:.4f}`
@@ -186,27 +206,35 @@ def send_telegram_alert(symbol: str, signal_data: dict, bot_token: str, chat_id:
     try:
         session.post(url, json=payload, timeout=8)
     except Exception as e:
-        print(f"⚠️ خطأ أثناء الإرسال: {e}")
+        print(f"⚠️ خطأ أثناء الإرسال لـ {symbol}: {e}")
 
+
+# ==========================================
+# 🔍 دورة الفحص الكاملة
+# ==========================================
 def run_scan(bot_token="", chat_id="", notify=False):
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"\n[{now_str}] 🚀 بدء فحص ملامسة الخط الأخضر لـ {len(WATCHLIST)} عملة (فريم 4H)...")
+    print(f"\n[{now_str}] 🚀 بدء فحص ملامسة الخط الأخضر لـ {len(WATCHLIST)} عملة على فريمات {TIMEFRAMES}...")
     
     hits = 0
-    for symbol in WATCHLIST:
-        df = fetch_klines(symbol, interval=TIMEFRAME, limit=120)
-        if df is None:
-            continue
+    for tf in TIMEFRAMES:
+        tf_title = "4 ساعات (4H)" if tf == "4h" else "اليومي (1D)"
+        print(f"\n⏳ جاري فحص فريم: {tf_title}...")
+        for symbol in WATCHLIST:
+            df = fetch_klines(symbol, interval=tf, limit=120)
+            if df is None:
+                continue
 
-        result = detect_auto_trendline_touch(df)
-        if result:
-            hits += 1
-            print(f"  🔥 تم رصد إشارة على {symbol} | سعر: {result['entry_price']:.4f}")
-            if notify and bot_token and chat_id:
-                send_telegram_alert(symbol, result, bot_token, chat_id)
-        time.sleep(0.08)
+            result = detect_auto_trendline_touch(df, timeframe=tf)
+            if result:
+                hits += 1
+                print(f"  🔥 تم رصد إشارة [{tf}] على {symbol} | سعر: {result['entry_price']:.4f} | ترند أخضر: {result['green_line_value']:.4f}")
+                if notify and bot_token and chat_id:
+                    send_telegram_alert(symbol, result, bot_token, chat_id)
+            time.sleep(0.08)
 
-    print(f"✅ انتهى الفحص: تم رصد {hits} فرصة ملامسة للخط الأخضر.")
+    print(f"\n✅ انتهى الفحص الشامل: تم رصد {hits} فرصة ملامسة للخط الأخضر (4H + 1D).")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -221,7 +249,7 @@ if __name__ == "__main__":
     chat = args.chat or TELEGRAM_CHAT_ID
 
     if args.loop:
-        print("🔄 تم تفعيل وضع المراقبة الدورية: سيعمل تلقائياً كل 4 ساعات...")
+        print("🔄 تم تفعيل وضع المراقبة الدورية (الفحص سيعمل كل 4 ساعات على الفريمين)...")
         while True:
             run_scan(bot_token=token, chat_id=chat, notify=args.notify)
             time.sleep(4 * 60 * 60)
