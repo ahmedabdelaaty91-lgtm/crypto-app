@@ -1,33 +1,229 @@
-//@version=5
-indicator("Swing Trade Pros - Auto Trend Lines Touch", overlay=true)
+# -*- coding: utf-8 -*-
+"""
+Auto Trend Lines 4H Scanner (Swing Trade Pros Algorithm)
+يقوم بفحص أزواج بينانس سبوت كل 4 ساعات لرصد لحظة ملامسة السعر لخط الترند الأخضر (الدعم)
+وإرسال إشعار فوري عبر تليجرام مع تحديد نقطة الدخول، وقف الخسارة، والأهداف.
+"""
 
-leftBars = input.int(7, "Left Bars (قوة القاع)")
-rightBars = input.int(3, "Right Bars")
+import sys
+import time
+import datetime
+import argparse
+import requests
+import pandas as pd
+import numpy as np
 
-pl = ta.pivotlow(low, leftBars, rightBars)
+# ضبط ترميز النصوص
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
-var float pl1 = na
-var int pl1_x = na
-var float pl2 = na
-var int pl2_x = na
+# إعدادات تليجرام الخاصة بك
+TELEGRAM_BOT_TOKEN = "8913224513:AAHSWPospHVspn49uTG_ifcAdmxBle-iMjg"
+TELEGRAM_CHAT_ID = "7760401819"
 
-if not na(pl)
-    pl1 := pl2
-    pl1_x := pl2_x
-    pl2 := pl
-    pl2_x := bar_index - rightBars
+# الفريم الزمني المطلوب: 4 ساعات
+TIMEFRAME = "4h"
 
-var line greenLine = na
-float greenLineVal = na
+# قائمة أشهر أزواج السبوت على بينانس
+WATCHLIST = [
+    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT",
+    "AVAXUSDT", "DOGEUSDT", "DOTUSDT", "LINKUSDT", "NEARUSDT", "SUIUSDT",
+    "APTUSDT", "FETUSDT", "RENDERUSDT", "INJUSDT", "OPUSDT", "ARBUSDT",
+    "TIAUSDT", "SEIUSDT", "RUNEUSDT", "AAVEUSDT", "UNIUSDT", "LTCUSDT",
+    "GALAUSDT", "SANDUSDT", "MANAUSDT", "AXSUSDT", "FTMUSDT", "ATOMUSDT",
+    "ICPUSDT", "KASUSDT", "PEPEUSDT", "SHIBUSDT", "WLDUSDT", "ENAUSDT",
+    "PENDLEUSDT", "TONUSDT", "PYTHUSDT", "JUPUSDT", "ONDOUSDT", "BONKUSDT"
+]
 
-if not na(pl1) and not na(pl2) and pl2_x > pl1_x
-    slope = (pl2 - pl1) / (pl2_x - pl1_x)
-    greenLineVal := pl2 + slope * (bar_index - pl2_x)
-    line.delete(greenLine)
-    greenLine := line.new(pl1_x, pl1, bar_index + 12, pl2 + slope * (bar_index + 12 - pl2_x), color=color.green, width=2)
+BINANCE_ENDPOINTS = [
+    "https://data-api.binance.vision/api/v3/klines",
+    "https://api.binance.com/api/v3/klines",
+    "https://api1.binance.com/api/v3/klines"
+]
 
-// شرط ملامسة الخط الأخضر
-touch_green = not na(greenLineVal) and low <= (greenLineVal * 1.008) and low >= (greenLineVal * 0.985) and close >= greenLineVal
+session = requests.Session()
+session.headers.update({"User-Agent": "Mozilla/5.0"})
 
-plotshape(touch_green, title="لمس الأخضر", style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small, text="ملامسة الترند")
-alertcondition(touch_green, title="ملامسة خط الترند الأخضر", message="🟢 تنبيه: السعر لامس خط الدعم الأخضر على {{ticker}} في فريم {{interval}}!")
+def fetch_klines(symbol: str, interval: str = "4h", limit: int = 120):
+    params = {"symbol": symbol, "interval": interval, "limit": limit}
+    for endpoint in BINANCE_ENDPOINTS:
+        try:
+            resp = session.get(endpoint, params=params, timeout=6)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data and isinstance(data, list) and len(data) >= 50:
+                    df = pd.DataFrame(data, columns=[
+                        "open_time", "open", "high", "low", "close", "volume",
+                        "close_time", "q_vol", "trades", "tb_vol", "tq_vol", "ignore"
+                    ])
+                    for col in ["open", "high", "low", "close", "volume"]:
+                        df[col] = df[col].astype(float)
+                    return df
+        except Exception:
+            continue
+    return None
+
+def detect_auto_trendline_touch(df: pd.DataFrame, left_bars: int = 7, right_bars: int = 3):
+    n = len(df)
+    if n < 50:
+        return None
+
+    lows = df['low'].values
+    highs = df['high'].values
+    closes = df['close'].values
+    opens = df['open'].values
+
+    # 1. استخراج نقاط القيعان (Pivot Lows)
+    pivot_indices = []
+    pivot_values = []
+
+    for i in range(left_bars, n - right_bars - 1):
+        is_pivot = True
+        val = lows[i]
+        for j in range(i - left_bars, i + right_bars + 1):
+            if j != i and lows[j] < val:
+                is_pivot = False
+                break
+        if is_pivot:
+            pivot_indices.append(i)
+            pivot_values.append(val)
+
+    if len(pivot_indices) < 2:
+        return None
+
+    # نأخذ آخر قاعين رئيسيين لتحديد خط الترند الأخضر
+    idx1, idx2 = pivot_indices[-2], pivot_indices[-1]
+    low1, low2 = pivot_values[-2], pivot_values[-1]
+
+    dx = idx2 - idx1
+    if dx <= 0:
+        return None
+    slope = (low2 - low1) / dx
+
+    if slope < -0.003 * low2:
+        return None
+
+    # التأكد من عدم كسر الخط سابقاً
+    for k in range(idx1, n - 1):
+        line_k = low1 + slope * (k - idx1)
+        if closes[k] < line_k * 0.988:
+            return None
+
+    # قيمة خط الترند الأخضر عند الشمعة الأخيرة
+    curr_idx = n - 1
+    green_line_value = low1 + slope * (curr_idx - idx1)
+
+    curr_open = opens[-1]
+    curr_close = closes[-1]
+    curr_high = highs[-1]
+    curr_low = lows[-1]
+
+    # شروط ملامسة واحترام الخط الأخضر
+    touched_line = curr_low <= (green_line_value * 1.008)
+    held_support = (curr_low >= green_line_value * 0.985) and (curr_close >= green_line_value * 0.995)
+    
+    is_green = curr_close >= curr_open
+    lower_wick = min(curr_open, curr_close) - curr_low
+    has_wick_rejection = lower_wick >= (0.35 * (curr_high - curr_low)) if (curr_high - curr_low) > 0 else False
+    is_bounce = is_green or has_wick_rejection
+
+    if touched_line and held_support and is_bounce:
+        stop_loss = green_line_value * 0.985
+        risk = curr_close - stop_loss
+        if risk <= 0:
+            return None
+
+        tp1 = curr_close + (1.5 * risk)
+        tp2 = curr_close + (2.5 * risk)
+
+        sl_pct = ((curr_close - stop_loss) / curr_close) * 100
+        tp1_pct = ((tp1 - curr_close) / curr_close) * 100
+        tp2_pct = ((tp2 - curr_close) / curr_close) * 100
+
+        if sl_pct > 6.5 or sl_pct < 0.6:
+            return None
+
+        return {
+            "green_line_value": green_line_value,
+            "entry_price": curr_close,
+            "stop_loss": stop_loss,
+            "tp1": tp1,
+            "tp2": tp2,
+            "sl_pct": sl_pct,
+            "tp1_pct": tp1_pct,
+            "tp2_pct": tp2_pct,
+            "slope_type": "صاعد 📈" if slope > 0 else "قناة تجميعية 📊"
+        }
+
+    return None
+
+def send_telegram_alert(symbol: str, signal_data: dict, bot_token: str, chat_id: str):
+    if not bot_token or not chat_id:
+        return
+
+    clean_symbol = symbol.replace("USDT", "")
+    message = f"""🟢 *تنبيه تريند لاين: ملامسة الخط الأخضر* 🟢
+━━━━━━━━━━━━━━━━━━━━
+🎯 *العملة:* `#{clean_symbol}` ({symbol})
+⏰ *الفريم:* 4 ساعات (4H)
+📈 *نوع الترند:* {signal_data['slope_type']}
+━━━━━━━━━━━━━━━━━━━━
+💵 *سعر الدخول:* `{signal_data['entry_price']:.4f}`
+🟩 *قيمة الترند الأخضر:* `{signal_data['green_line_value']:.4f}`
+🛑 *وقف الخسارة (SL):* `{signal_data['stop_loss']:.4f}` (-{signal_data['sl_pct']:.2f}%)
+🎯 *الهدف الأول (TP1):* `{signal_data['tp1']:.4f}` (+{signal_data['tp1_pct']:.2f}%)
+🏆 *الهدف الثاني (TP2):* `{signal_data['tp2']:.4f}` (+{signal_data['tp2_pct']:.2f}%)
+━━━━━━━━━━━━━━━━━━━━
+💡 *السبب:* ملامسة دقيقة لخط الدعم الأخضر مع ارتداد شرائي مؤكد.
+🔗 [فتح الشارت على TradingView](https://www.tradingview.com/chart/?symbol=BINANCE:{symbol})
+"""
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown", "disable_web_page_preview": True}
+    try:
+        session.post(url, json=payload, timeout=8)
+    except Exception as e:
+        print(f"⚠️ خطأ أثناء الإرسال: {e}")
+
+def run_scan(bot_token="", chat_id="", notify=False):
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"\n[{now_str}] 🚀 بدء فحص ملامسة الخط الأخضر لـ {len(WATCHLIST)} عملة (فريم 4H)...")
+    
+    hits = 0
+    for symbol in WATCHLIST:
+        df = fetch_klines(symbol, interval=TIMEFRAME, limit=120)
+        if df is None:
+            continue
+
+        result = detect_auto_trendline_touch(df)
+        if result:
+            hits += 1
+            print(f"  🔥 تم رصد إشارة على {symbol} | سعر: {result['entry_price']:.4f}")
+            if notify and bot_token and chat_id:
+                send_telegram_alert(symbol, result, bot_token, chat_id)
+        time.sleep(0.08)
+
+    print(f"✅ انتهى الفحص: تم رصد {hits} فرصة ملامسة للخط الأخضر.")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--once", action="store_true", help="تشغيل مرة واحدة")
+    parser.add_argument("--loop", action="store_true", help="تشغيل مستمر كل 4 ساعات")
+    parser.add_argument("--notify", action="store_true", help="إرسال لتليجرام")
+    parser.add_argument("--token", type=str, default="")
+    parser.add_argument("--chat", type=str, default="")
+    args = parser.parse_args()
+
+    token = args.token or TELEGRAM_BOT_TOKEN
+    chat = args.chat or TELEGRAM_CHAT_ID
+
+    if args.loop:
+        print("🔄 تم تفعيل وضع المراقبة الدورية: سيعمل تلقائياً كل 4 ساعات...")
+        while True:
+            run_scan(bot_token=token, chat_id=chat, notify=args.notify)
+            time.sleep(4 * 60 * 60)
+    else:
+        run_scan(bot_token=token, chat_id=chat, notify=args.notify)
