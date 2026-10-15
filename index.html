@@ -163,9 +163,10 @@
           onchange="handleDateFilter(this.value)" 
           class="w-full bg-gray-900/90 border border-gray-800 rounded-xl pr-3 pl-8 py-2 text-xs text-slate-200 font-bold focus:outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
         >
-          <option value="all">📅 كل التواريخ</option>
-          <option value="11pm">🔥 شمعة 11:00 م (14 أكتوبر)</option>
-          <option value="today">📅 جلسات اليوم (14 أكتوبر)</option>
+          <option value="all">📅 كل التواريخ والجلسات</option>
+          <option value="3am">🔥 شمعة 03:00 ص فجراً (15 أكتوبر)</option>
+          <option value="11pm"> شمعة 11:00 م (14 أكتوبر)</option>
+          <option value="today">📅 كل صفقات اليوم النشطة</option>
         </select>
         <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400 text-[10px]">▼</span>
       </div>
@@ -1182,10 +1183,12 @@
         const pub = (item.publishedAt || '');
         const ent = (item.entry_date || '');
 
-        if (selectedDateFilter === '11pm') {
+        if (selectedDateFilter === '3am') {
+          matchesDate = pub.includes('3:') || pub.includes('03:') || ent.includes('00:2') || ent.includes('2026-10-15');
+        } else if (selectedDateFilter === '11pm') {
           matchesDate = item.is11pm || pub.includes('11:0') || pub.includes('11:1') || ent.includes('20:1') || ent.includes('23:1');
         } else if (selectedDateFilter === 'today') {
-          matchesDate = pub.includes('14 أكتوبر') || ent.includes('2026-10-14') || item.is11pm;
+          matchesDate = pub.includes('15 أكتوبر') || pub.includes('14 أكتوبر') || ent.includes('2026-10-15') || ent.includes('2026-10-14') || item.is11pm;
         } else if (selectedDateFilter === 'earlier') {
           matchesDate = (pub.includes('14 أكتوبر') || ent.includes('2026-10-14')) && 
                         !item.is11pm && !pub.includes('11:0') && !pub.includes('11:1') && !ent.includes('20:1') && !ent.includes('23:1');
@@ -1871,7 +1874,7 @@
 
     // Register Service Worker with v=5 cache bust
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=5').then((reg) => {
+      navigator.serviceWorker.register('./sw.js?v=6').then((reg) => {
         reg.update();
       }).catch(() => {});
     }

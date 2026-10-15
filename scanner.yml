@@ -1,0 +1,49 @@
+name: Crypto Spot Scanner 24/7 & Daily Reporter
+
+on:
+  schedule:
+    # يعمل بعد إغلاق شمعة بينانس الـ 4 ساعات بالدقيقة 7 لتفادي زحام السيرفرات العالمية (6 جلسات يومياً)
+    # المواعيد بتوقيت مصر: 03:07 فجراً، 07:07 صباحاً، 11:07 ظهراً، 03:07 عصراً، 07:07 مساءً، 11:07 ليلاً
+    - cron: '7 0,4,8,12,16,20 * * *'
+  workflow_dispatch: # زر تشغيل يدوي في أي وقت بضغطة زر
+
+jobs:
+  scan_and_report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Market Scanner & Confirmed 4H Alerts
+        run: |
+          python scanner.py --once --notify
+
+      - name: Send Nightly Performance Report (At 11 PM Close)
+        if: github.event.schedule == '7 20 * * *'
+        run: |
+          python scanner.py --report
+
+      - name: Save & Commit Trades Data (منع تكرار الصفقات نهائياً)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add trades_data.json
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto-update active trades [skip ci]"
+            git pull --rebase origin main || true
+            git push origin main || true
+          fi

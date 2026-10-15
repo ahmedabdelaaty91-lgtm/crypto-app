@@ -8,6 +8,7 @@ and generates daily performance reports sent directly to Telegram.
 from datetime import datetime
 import json
 import os
+import requests
 from config import BINANCE_API_URL, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 from telegram_notifier import send_telegram_alert, format_price
 

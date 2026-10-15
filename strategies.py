@@ -1,18 +1,19 @@
 # strategies.py
 """
-Spot Technical Analysis Engine for 11 Crypto Strategies
+Spot Technical Analysis Engine for 12 Crypto Strategies
 Includes:
 1. Aroon Zero Bounce
 2. Aroon Deep Dip Sniper
 3. Supertrend + EMA 200
-4. Stochastic RSI
-5. EMA 20 / EMA 50
+4. Stochastic RSI (Trend Pullback)
+5. EMA 20 / EMA 50 Golden Cross
 6. Bollinger + MACD
 7. MFI Whale Accumulation
 8. RSI Bullish Divergence
 9. Ichimoku Kumo Breakout
 10. Donchian Breakout + Volume
 11. Whale Accumulation Pre-Pump
+12. Ichimoku Tenkan / Kijun Bullish Cross (TK Cross)
 """
 
 import numpy as np
@@ -246,12 +247,14 @@ def evaluate_strategies(df: pd.DataFrame) -> list:
             "strength": "High"
         })
 
-    # 2. Aroon Deep Dip Sniper: Aroon Osc was -90 to -100, entering on bullish reversal candle
+    # 2. Aroon Deep Dip Sniper: Oversold bounce with structural hold and volume
     recent_min_osc = aroon_osc.iloc[-4:-1].min()
-    if (recent_min_osc <= -85) and (current_close > current_open) and (current_close > prev_close):
+    dip_trend_ok = (current_close >= ema20.iloc[-1]) or (current_close >= ema50.iloc[-1])
+    dip_vol_ok = current_vol >= 1.15 * vol_sma20
+    if (recent_min_osc <= -85) and (current_close > current_open) and (current_close > prev_close) and dip_trend_ok and dip_vol_ok:
         signals.append({
             "strategy": "Aroon Deep Dip Sniper",
-            "reason": f"Aroon Osc was deep oversold ({recent_min_osc:.1f}) + Bullish confirmation candle",
+            "reason": f"Aroon Osc was deep oversold ({recent_min_osc:.1f}) + Confirmed volume bounce above EMA support",
             "strength": "High"
         })
 
@@ -266,12 +269,13 @@ def evaluate_strategies(df: pd.DataFrame) -> list:
                 "strength": "High"
             })
 
-    # 4. Stochastic RSI: Stoch RSI K crosses D below 20 (or below 25)
+    # 4. Stochastic RSI: Stoch RSI K crosses D in oversold zone ONLY in a healthy trend
     stoch_cross = (fast_k.iloc[-2] <= fast_d.iloc[-2] and fast_k.iloc[-1] > fast_d.iloc[-1])
-    if stoch_cross and (fast_k.iloc[-1] < 28 or fast_d.iloc[-1] < 28):
+    stoch_trend_safe = (current_close >= ema50.iloc[-1]) or (current_close >= ema20.iloc[-1] and ema20.iloc[-1] >= ema20.iloc[-2])
+    if stoch_cross and (fast_k.iloc[-1] < 28 or fast_d.iloc[-1] < 28) and stoch_trend_safe:
         signals.append({
             "strategy": "Stochastic RSI Oversold Bounce",
-            "reason": f"Stoch RSI K/D crossed upward in oversold zone (K:{fast_k.iloc[-1]:.1f}, D:{fast_d.iloc[-1]:.1f})",
+            "reason": f"Stoch RSI K/D crossed upward in oversold zone (K:{fast_k.iloc[-1]:.1f}, D:{fast_d.iloc[-1]:.1f}) with Bullish Trend support",
             "strength": "Medium"
         })
 
@@ -294,13 +298,15 @@ def evaluate_strategies(df: pd.DataFrame) -> list:
             "strength": "Medium"
         })
 
-    # 7. MFI Whale Accumulation: MFI was < 20 and now curling up or crossing 20
+    # 7. MFI Whale Accumulation: MFI was < 22 and now curling up with Whale Volume & Structure
     mfi_deep = (mfi.iloc[-4:-1].min() < 22)
     mfi_rising = (mfi.iloc[-1] > mfi.iloc[-2]) and (current_close > current_open)
-    if mfi_deep and mfi_rising:
+    mfi_vol_ok = current_vol >= 1.2 * vol_sma20
+    mfi_structure_ok = (current_close >= ema20.iloc[-1]) or (current_close >= ema50.iloc[-1])
+    if mfi_deep and mfi_rising and mfi_vol_ok and mfi_structure_ok:
         signals.append({
             "strategy": "MFI Whale Accumulation",
-            "reason": f"Smart money accumulation detected: MFI dipped to {mfi.iloc[-4:-1].min():.1f} and curling up",
+            "reason": f"Smart money accumulation detected: MFI dipped to {mfi.iloc[-4:-1].min():.1f} and curling up with volume {current_vol/vol_sma20:.1f}x",
             "strength": "High"
         })
 
@@ -355,6 +361,16 @@ def evaluate_strategies(df: pd.DataFrame) -> list:
         signals.append({
             "strategy": "Whale Accumulation Pre-Pump",
             "reason": f"🔥 رصد تجميع حيتان استباقي: انفجار فوليوم {vol_ratio:.1f}x بعد انكماش وضغط بولنجر ({min_bw:.2f})",
+            "strength": "High"
+        })
+
+    # 12. Ichimoku Tenkan / Kijun Bullish Cross (TK Cross)
+    tk_cross_now = (tenkan.iloc[-2] <= kijun.iloc[-2] and tenkan.iloc[-1] > kijun.iloc[-1])
+    tk_cross_recent = (tenkan.iloc[-3] <= kijun.iloc[-3] and tenkan.iloc[-2] > kijun.iloc[-2]) and (tenkan.iloc[-1] >= kijun.iloc[-1])
+    if (tk_cross_now or tk_cross_recent) and (current_close >= kijun.iloc[-1]):
+        signals.append({
+            "strategy": "Ichimoku Tenkan/Kijun Bullish Cross",
+            "reason": f"قوة اتجاهية: تقاطع ذهبي لخط التنكن ({tenkan.iloc[-1]:.4f}) فوق الكيجون ({kijun.iloc[-1]:.4f}) مع ثبات السعر أعلاهما",
             "strength": "High"
         })
 

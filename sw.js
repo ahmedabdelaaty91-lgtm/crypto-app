@@ -1,5 +1,5 @@
-// Service Worker for CryptoSniper PWA (Version 5 - Network-First for Instant Updates)
-const CACHE_NAME = 'cryptosniper-v5';
+// Service Worker for CryptoSniper PWA (Version 6 - 3 AM Session & Whale Pre-Pump)
+const CACHE_NAME = 'cryptosniper-v6';
 const ASSETS_TO_CACHE = [
   './manifest.json',
   './icon-192.png',

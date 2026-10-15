@@ -132,6 +132,23 @@ def scan_pair_timeframe(item):
     if rsi_now > 68:
         return []
 
+    # 🛡️ 3. درع حماية الاتجاه والسيولة (Trend & Volume Shield) لمنع السكاكين الهابطة:
+    # حظر شراء أي عملة تتداول في مسار هابط تحت EMA 20 و EMA 50 إلا إذا كان هناك انفجار فوليوم حيتان استثنائي (>= 2.5x)
+    ema20_now = calculate_ema(df['close'], 20).iloc[-1]
+    ema50_now = calculate_ema(df['close'], 50).iloc[-1]
+    vol_sma20 = df['volume'].rolling(20).mean().iloc[-1]
+
+    is_downtrend_trap = (current_close < ema50_now) and (ema20_now < ema50_now)
+    has_whale_explosion = (df['volume'].iloc[-1] >= 2.5 * vol_sma20)
+
+    if is_downtrend_trap and not has_whale_explosion:
+        return []  # حجب فوري للعملات الهابطة
+
+    # منع شراء العملة إذا كانت تسجل قيعاناً جديدة تكسر دعم الـ 10 شمعات السابقة
+    recent_min_low = df['low'].iloc[-10:-1].min()
+    if df['low'].iloc[-1] < recent_min_low * 0.998 and current_close < ema20_now:
+        return []  # استبعاد العملات التي تكسر القيعان
+
     signals = evaluate_strategies(df)
     if not signals:
         return []
@@ -182,7 +199,7 @@ def scan_pair_timeframe(item):
 
 def run_full_scan(bot_token="", chat_id="", notify=False):
     print("=" * 70, flush=True)
-    print("🚀 بدء فحص العملات الرقمية للسبوت (Binance Spot 11 Strategies Scanner)", flush=True)
+    print("🚀 بدء فحص العملات الرقمية للسبوت (Binance Spot 12 Strategies Scanner)", flush=True)
     print(f"⏰ الفريمات: {', '.join(TIMEFRAMES)} | عدد العملات في القائمة: {len(COINS_RAW)}", flush=True)
     print("=" * 70, flush=True)
 
@@ -212,7 +229,7 @@ def run_full_scan(bot_token="", chat_id="", notify=False):
         for tf in TIMEFRAMES:
             tasks.append((c_clean, pair, tf))
 
-    print(f"🔍 فحص {len(tasks)} مهمة تحليل عبر الـ 11 استراتيجية بالتوازي...", flush=True)
+    print(f"🔍 فحص {len(tasks)} مهمة تحليل عبر الـ 12 استراتيجية بالتوازي...", flush=True)
     start_time = time.time()
     all_signals = []
 

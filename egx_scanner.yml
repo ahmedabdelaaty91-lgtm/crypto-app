@@ -1,0 +1,39 @@
+name: EGX 30 Hourly Scanner (Egyptian Stock Exchange)
+
+on:
+  schedule:
+    # فحص كل ساعة أثناء وقت جلسة البورصة المصرية فقط:
+    # الأيام: الأحد، الإثنين، الثلاثاء، الأربعاء، الخميس (0-4)
+    # مواعيد الفحص بتوقيت القاهرة: 10:00 ص، 11:00 ص، 12:00 م، 01:00 م، 02:00 م
+    # في التوقيت الصيفي لمصر (UTC+3):
+    # 07:00 UTC = 10:00 صباحاً (افتتاح الجلسة)
+    # 08:00 UTC = 11:00 صباحاً
+    # 09:00 UTC = 12:00 ظهراً
+    # 10:00 UTC = 01:00 ظهراً
+    # 11:00 UTC = 02:00 ظهراً (قبل إغلاق الجلسة)
+    # بعد انتهاء اليوم (بعد 02:30 م) ويومي الجمعة والسبت: لا يعمل نهائياً
+    - cron: '0 7,8,9,10,11 * * 0-4'
+  workflow_dispatch: # زر فحص يدوي في أي وقت بضغطة واحدة
+
+jobs:
+  egx_session_scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run EGX Confluence Scanner
+        run: |
+          python egx_scanner.py
