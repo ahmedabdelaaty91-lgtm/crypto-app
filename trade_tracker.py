@@ -70,7 +70,13 @@ def record_new_trade(signal_data: dict):
         "current_price": float(signal_data["entry_price"]),
         "pnl_pct": 0.0,
         "closed_date": None,
-        "result_reason": None
+        "result_reason": None,
+        "testnet_order_id": signal_data.get("testnet_order_id"),
+        "testnet_qty": signal_data.get("testnet_qty", 0.0),
+        "testnet_cost": signal_data.get("testnet_cost", 0.0),
+        "testnet_avg_price": signal_data.get("testnet_avg_price", 0.0),
+        "testnet_sell_order_id": None,
+        "testnet_realized_usdt": None
     }
     data["active"].append(trade)
     save_trades(data)
@@ -110,22 +116,48 @@ def update_all_trades():
         t["pnl_pct"] = ((cur_price - t["entry_price"]) / t["entry_price"]) * 100
         
         # Check Exit Conditions
+        is_closing = False
         if cur_price >= t["tp2"]:
             t["status"] = "HIT_TP2"
             t["closed_date"] = now_str
             t["result_reason"] = f"حقق الهدف الثاني (+{t['tp2_pct']:.1f}%) 🚀🎯"
-            data["closed"].append(t)
-        elif cur_price >= t["tp1"] and t["status"] == "ACTIVE":
-            # Hits TP1: Keep open aiming for TP2, but mark progress
-            t["result_reason"] = f"حقق الهدف الأول (+{t['tp1_pct']:.1f}%) ✅"
-            still_active.append(t)
+            is_closing = True
         elif cur_price <= t["stop_loss"]:
             t["status"] = "STOPPED_OUT"
             t["closed_date"] = now_str
             t["result_reason"] = f"ضرب وقف الخسارة (-{t['sl_pct']:.1f}%) 🛑"
-            data["closed"].append(t)
+            is_closing = True
+        elif cur_price >= t["tp1"] and t["status"] == "ACTIVE":
+            # Hits TP1: Keep open aiming for TP2, but mark progress
+            t["result_reason"] = f"حقق الهدف الأول (+{t['tp1_pct']:.1f}%) ✅"
+            still_active.append(t)
         else:
             still_active.append(t)
+
+        if is_closing:
+            data["closed"].append(t)
+            # Automatic Testnet Sell execution if position was opened on Testnet
+            if t.get("testnet_order_id") and t.get("testnet_qty", 0) > 0:
+                try:
+                    from testnet_trader import execute_testnet_sell
+                    print(f"  [Testnet Sell] 🧪 إغلاق صفقة {sym} تلقائياً على باينانس التجريبي...", flush=True)
+                    s_res = execute_testnet_sell(sym, t["testnet_qty"])
+                    if s_res.get("success"):
+                        ret_usdt = s_res.get("return_usdt", 0.0)
+                        cost = t.get("testnet_cost", 10.0)
+                        realized = ret_usdt - cost
+                        t["testnet_sell_order_id"] = s_res["order_id"]
+                        t["testnet_realized_usdt"] = realized
+                        sign_str = "+" if realized >= 0 else ""
+                        tg_msg = f"""🧪 *إغلاق صفقة تلقائي على Binance Testnet!*
+🪙 *العملة:* `#{t['base']}/USDT`
+📌 *النتيجة:* {t['result_reason']}
+💵 *قيمة الخروج:* `${ret_usdt:.2f} USDT`
+💰 *الربح/الخسارة المحققة:* `{sign_str}{realized:.2f} USDT`
+🆔 *رقم أمر البيع:* `#{s_res['order_id']}`"""
+                        send_telegram_alert(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, tg_msg)
+                except Exception as ex:
+                    print(f"  [Testnet Sell Error]: {ex}", flush=True)
 
     data["active"] = still_active
     save_trades(data)

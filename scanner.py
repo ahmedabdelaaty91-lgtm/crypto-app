@@ -21,7 +21,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from config import BINANCE_API_URL, COINS_RAW, SYMBOL_ALIASES, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TIMEFRAMES
+from config import BINANCE_API_URL, COINS_RAW, SYMBOL_ALIASES, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TIMEFRAMES, ENABLE_TESTNET_TRADING, TESTNET_TRADE_AMOUNT_USDT
 from strategies import evaluate_strategies, calculate_atr, find_structural_support, calculate_ema, calculate_rsi
 from telegram_notifier import send_telegram_alert, format_signal_message, format_price
 from trade_tracker import record_new_trade, send_daily_report_to_telegram
@@ -197,6 +197,14 @@ def scan_pair_timeframe(item):
     return results
 
 
+def get_cairo_time_str():
+    from datetime import datetime, timedelta
+    cairo_dt = datetime.utcnow() + timedelta(hours=3)
+    period = "م" if cairo_dt.hour >= 12 else "ص"
+    hour_12 = cairo_dt.hour - 12 if cairo_dt.hour > 12 else (12 if cairo_dt.hour == 0 else cairo_dt.hour)
+    return f"{hour_12}:{cairo_dt.strftime('%M')} {period} (بتوقيت مصر)"
+
+
 def run_full_scan(bot_token="", chat_id="", notify=False):
     print("=" * 70, flush=True)
     print("🚀 بدء فحص العملات الرقمية للسبوت (Binance Spot 12 Strategies Scanner)", flush=True)
@@ -313,6 +321,23 @@ def run_full_scan(bot_token="", chat_id="", notify=False):
                 primary['strategy'] = f"🐋⚡ إشارة حيتان استباقية (Grade S+ VIP): {combined_names}"
             else:
                 primary['strategy'] = f"⭐ تطابق {len(sigs)} استراتيجيات: {combined_names}"
+
+            # التنفيذ الفعلي التلقائي على حساب Binance Spot Testnet (إذا كان مفعلاً)
+            if ENABLE_TESTNET_TRADING:
+                try:
+                    from testnet_trader import execute_testnet_buy
+                    print(f"  [Testnet] 🧪 جاري تنفيذ شراء تلقائي لـ {sym} بقيمة ${TESTNET_TRADE_AMOUNT_USDT} على باينانس التجريبي...", flush=True)
+                    t_res = execute_testnet_buy(sym, TESTNET_TRADE_AMOUNT_USDT)
+                    if t_res.get("success"):
+                        primary["testnet_order_id"] = t_res["order_id"]
+                        primary["testnet_qty"] = t_res["qty"]
+                        primary["testnet_cost"] = t_res["cost"]
+                        primary["testnet_avg_price"] = t_res["avg_price"]
+                        print(f"  [Testnet] ✅ تم تنفيذ الشراء بنجاح! كمية: {t_res['qty']} | أمر رقم #{t_res['order_id']}", flush=True)
+                    else:
+                        print(f"  [Testnet] ⚠️ تعذر التنفيذ على باينانس التجريبي: {t_res.get('error')}", flush=True)
+                except Exception as t_err:
+                    print(f"  [Testnet Error]: {t_err}", flush=True)
 
             try:
                 msg = format_signal_message(primary)

@@ -38,3 +38,12 @@ SYMBOL_ALIASES = {
     "POL": "POL",      # Formerly MATIC
     "RENDER": "RENDER",# Formerly RNDR
 }
+
+# Binance Spot Testnet Configuration (Automated Execution & Testing)
+import os
+BINANCE_TESTNET_API_KEY = os.getenv("BINANCE_TESTNET_API_KEY", "rKPp8uQ5VJlBbp64nkszfVevuh56VVTLoM4LCCgVohEbNzyd3SB4mE9OowPsXIZE")
+BINANCE_TESTNET_SECRET_KEY = os.getenv("BINANCE_TESTNET_SECRET_KEY", "Xn96v8wGmSDI5XVqjswKtqu50XI6aTDjru2vQ1Id6X8aQlh5JNi1JeOjhZ0gxHoe")
+BINANCE_TESTNET_URL = "https://testnet.binance.vision"
+ENABLE_TESTNET_TRADING = os.getenv("ENABLE_TESTNET_TRADING", "true").lower() == "true"
+TESTNET_TRADE_AMOUNT_USDT = float(os.getenv("TESTNET_TRADE_AMOUNT_USDT", "10.0"))
+

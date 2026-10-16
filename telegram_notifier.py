@@ -79,7 +79,6 @@ def format_signal_message(signal_data: dict) -> str:
     sl_str = format_price(sl)
     tp1_str = format_price(tp1)
     tp2_str = format_price(tp2)
-
     msg = f"""🚨 *إشارة دخول Spot جديدة!* 🚀
 
 🪙 *العملة:* `#{base}/USDT`
@@ -93,9 +92,21 @@ def format_signal_message(signal_data: dict) -> str:
 🛑 *وقف الخسارة (أسفل الدعم):* `${sl_str}` (-{sl_pct:.2f}%)
 🎯 *الهدف الأول (TP1):* `${tp1_str}` (+{tp1_pct:.2f}%)
 🎯 *الهدف الثاني (TP2):* `${tp2_str}` (+{tp2_pct:.2f}%)
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━"""
 
+    if signal_data.get("testnet_order_id"):
+        t_qty = signal_data.get("testnet_qty", 0.0)
+        t_id = signal_data.get("testnet_order_id")
+        t_cost = signal_data.get("testnet_cost", 10.0)
+        msg += f"""
+🧪 *تنفيذ تلقائي على باينانس التجريبي (Testnet):*
+✅ تم شراء `{t_qty} {base}` بقيمة `${t_cost:.2f} USDT`
+🆔 رقم الأمر: `#{t_id}`
+━━━━━━━━━━━━━━━━━━━━"""
+
+    msg += f"""
 📊 [عرض الشارت على Binance](https://www.binance.com/en/trade/{base}_USDT?type=spot)
 📈 [عرض الشارت على TradingView](https://www.tradingview.com/chart/?symbol=BINANCE:{base}USDT)
 """
     return msg
+
