@@ -13,6 +13,25 @@ from config import (
 )
 
 _symbol_filters_cache = {}
+_time_offset = None
+_last_offset_fetch = 0
+
+def get_synced_timestamp() -> int:
+    """Calculates Binance server time using synchronized offset to prevent recvWindow errors."""
+    global _time_offset, _last_offset_fetch
+    now = time.time()
+    if _time_offset is None or (now - _last_offset_fetch > 300):
+        try:
+            res = requests.get(f"{BINANCE_TESTNET_URL}/api/v3/time", timeout=5)
+            if res.status_code == 200:
+                srv_time = res.json().get("serverTime")
+                local_time = int(now * 1000)
+                _time_offset = srv_time - local_time
+                _last_offset_fetch = now
+        except Exception:
+            if _time_offset is None:
+                _time_offset = 0
+    return int(time.time() * 1000) + _time_offset
 
 def get_symbol_filters(symbol: str) -> dict:
     """Fetches and caches LOT_SIZE stepSize and minQty for a symbol."""
@@ -65,8 +84,10 @@ def get_testnet_balance(asset: str = "USDT") -> float:
     if not BINANCE_TESTNET_API_KEY or not BINANCE_TESTNET_SECRET_KEY:
         return 0.0
     try:
-        ts = int(time.time() * 1000)
-        params = {"timestamp": ts}
+        params = {
+            "recvWindow": 60000,
+            "timestamp": get_synced_timestamp()
+        }
         signed_query = _sign_query(params, BINANCE_TESTNET_SECRET_KEY)
         headers = {"X-MBX-APIKEY": BINANCE_TESTNET_API_KEY}
         url = f"{BINANCE_TESTNET_URL}/api/v3/account?{signed_query}"
@@ -75,6 +96,8 @@ def get_testnet_balance(asset: str = "USDT") -> float:
             for b in res.json().get("balances", []):
                 if b["asset"] == asset:
                     return float(b["free"])
+        else:
+            print(f"[Testnet Error] Account fetch failed: {res.status_code} {res.text}")
     except Exception as e:
         print(f"[Testnet Error] Balance fetch failed: {e}")
     return 0.0
@@ -88,13 +111,13 @@ def execute_testnet_buy(symbol: str, quote_amount_usdt: float = 10.0) -> dict:
         return {"success": False, "error": "No API Keys configured"}
 
     try:
-        ts = int(time.time() * 1000)
         params = {
             "symbol": symbol,
             "side": "BUY",
             "type": "MARKET",
             "quoteOrderQty": round(float(quote_amount_usdt), 2),
-            "timestamp": ts
+            "recvWindow": 60000,
+            "timestamp": get_synced_timestamp()
         }
         signed_query = _sign_query(params, BINANCE_TESTNET_SECRET_KEY)
         headers = {"X-MBX-APIKEY": BINANCE_TESTNET_API_KEY}
@@ -137,17 +160,16 @@ def execute_testnet_sell(symbol: str, quantity: float) -> dict:
         if valid_qty <= 0:
             return {"success": False, "error": f"Quantity {quantity} rounded to 0 with step {step_size}"}
 
-        # Format quantity to remove excessive scientific notation
         prec = int(round(-math.log10(step_size))) if step_size < 1 else 0
         qty_str = f"{valid_qty:.{prec}f}" if prec > 0 else str(int(valid_qty))
 
-        ts = int(time.time() * 1000)
         params = {
             "symbol": symbol,
             "side": "SELL",
             "type": "MARKET",
             "quantity": qty_str,
-            "timestamp": ts
+            "recvWindow": 60000,
+            "timestamp": get_synced_timestamp()
         }
         signed_query = _sign_query(params, BINANCE_TESTNET_SECRET_KEY)
         headers = {"X-MBX-APIKEY": BINANCE_TESTNET_API_KEY}
