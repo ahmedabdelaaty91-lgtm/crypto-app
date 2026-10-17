@@ -99,9 +99,15 @@ def format_signal_message(signal_data: dict) -> str:
         t_id = signal_data.get("testnet_order_id")
         t_cost = signal_data.get("testnet_cost", 10.0)
         msg += f"""
-🧪 *تنفيذ تلقائي على باينانس التجريبي (Testnet):*
-✅ تم شراء `{t_qty} {base}` بقيمة `${t_cost:.2f} USDT`
+🧪 *تنفيذ تلقائي على باينانس التجريبي (Binance Testnet):*
+✅ تم تنفيذ الشراء الفوري: `{t_qty} {base}` بقيمة `${t_cost:.2f} USDT`
 🆔 رقم الأمر: `#{t_id}`
+━━━━━━━━━━━━━━━━━━━━"""
+    else:
+        msg += f"""
+🧪 *تنفيذ تلقائي في المحفظة الافتراضية (Paper Trading):*
+✅ تم فتح الصفقة افتراضياً بقيمة `$10.00 USDT`
+📊 جاري المتابعة اللحظية حتى ضرب الأهداف أو الوقف...
 ━━━━━━━━━━━━━━━━━━━━"""
 
     msg += f"""

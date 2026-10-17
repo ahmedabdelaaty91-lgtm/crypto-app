@@ -120,23 +120,42 @@ def update_all_trades():
         if cur_price >= t["tp2"]:
             t["status"] = "HIT_TP2"
             t["closed_date"] = now_str
-            t["result_reason"] = f"حقق الهدف الثاني (+{t['tp2_pct']:.1f}%) 🚀🎯"
+            t["result_reason"] = f"حقق الهدف الثاني بالكامل (+{t['tp2_pct']:.1f}%) 🚀🎯"
             is_closing = True
         elif cur_price <= t["stop_loss"]:
             t["status"] = "STOPPED_OUT"
             t["closed_date"] = now_str
             t["result_reason"] = f"ضرب وقف الخسارة (-{t['sl_pct']:.1f}%) 🛑"
             is_closing = True
-        elif cur_price >= t["tp1"] and t["status"] == "ACTIVE":
-            # Hits TP1: Keep open aiming for TP2, but mark progress
-            t["result_reason"] = f"حقق الهدف الأول (+{t['tp1_pct']:.1f}%) ✅"
+        elif cur_price >= t["tp1"]:
+            # Hits TP1: Alert once, move SL to breakeven, keep aiming for TP2
+            if not t.get("tp1_alerted", False):
+                t["tp1_alerted"] = True
+                t["stop_loss"] = float(t["entry_price"])  # Breakeven stop
+                t["result_reason"] = f"حقق الهدف الأول (+{t['tp1_pct']:.1f}%) ✅"
+                tp1_msg = f"""🎯 *تحديث صفقة: تم تحقيق الهدف الأول (TP1) بنجاح!* 🚀
+
+🪙 *العملة:* `#{t['base']}/USDT`
+⏰ *الفريم:* `{t.get('timeframe', '4H').upper()}`
+💵 *سعر الدخول:* `${format_price(t['entry_price'])}`
+🎯 *سعر الهدف الأول:* `${format_price(t['tp1'])}`
+📈 *السعر الحالي:* `${format_price(cur_price)}` (+{t['tp1_pct']:.2f}%)
+━━━━━━━━━━━━━━━━━━━━
+🛡️ *إدارة الأمان:* تم تأمين الصفقة ورفع الوقف إلى سعر الدخول لحجز الأرباح وتصفير المخاطرة!
+⏳ *الهدف القادم (TP2):* `${format_price(t['tp2'])}` (+{t['tp2_pct']:.2f}%)
+━━━━━━━━━━━━━━━━━━━━"""
+                send_telegram_alert(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, tp1_msg)
             still_active.append(t)
         else:
             still_active.append(t)
 
         if is_closing:
             data["closed"].append(t)
-            # Automatic Testnet Sell execution if position was opened on Testnet
+            testnet_sell_id = None
+            ret_usdt = 0.0
+            pnl_dollars = 0.0
+
+            # 1. Execute on Testnet if trade had testnet order
             if t.get("testnet_order_id") and t.get("testnet_qty", 0) > 0:
                 try:
                     from testnet_trader import execute_testnet_sell
@@ -145,19 +164,49 @@ def update_all_trades():
                     if s_res.get("success"):
                         ret_usdt = s_res.get("return_usdt", 0.0)
                         cost = t.get("testnet_cost", 10.0)
-                        realized = ret_usdt - cost
-                        t["testnet_sell_order_id"] = s_res["order_id"]
-                        t["testnet_realized_usdt"] = realized
-                        sign_str = "+" if realized >= 0 else ""
-                        tg_msg = f"""🧪 *إغلاق صفقة تلقائي على Binance Testnet!*
-🪙 *العملة:* `#{t['base']}/USDT`
-📌 *النتيجة:* {t['result_reason']}
-💵 *قيمة الخروج:* `${ret_usdt:.2f} USDT`
-💰 *الربح/الخسارة المحققة:* `{sign_str}{realized:.2f} USDT`
-🆔 *رقم أمر البيع:* `#{s_res['order_id']}`"""
-                        send_telegram_alert(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, tg_msg)
+                        pnl_dollars = ret_usdt - cost
+                        testnet_sell_id = s_res.get("order_id")
+                        t["testnet_sell_order_id"] = testnet_sell_id
+                        t["testnet_realized_usdt"] = pnl_dollars
                 except Exception as ex:
                     print(f"  [Testnet Sell Error]: {ex}", flush=True)
+
+            # Fallback calculation if not on testnet
+            if pnl_dollars == 0.0:
+                cost = float(t.get("testnet_cost") or 10.0)
+                if t["status"] == "HIT_TP2":
+                    pnl_dollars = cost * (t["tp2_pct"] / 100.0)
+                else:
+                    pnl_dollars = - (cost * (t["sl_pct"] / 100.0))
+
+            # 2. Send instant Telegram Notification for TP2 or SL
+            if t["status"] == "HIT_TP2":
+                tp2_msg = f"""🏆 *مبروك! تحقيق الهدف الثاني بالكامل وإغلاق الصفقة (TP2)!* 🚀🎯
+
+🪙 *العملة:* `#{t['base']}/USDT`
+⏰ *الفريم:* `{t.get('timeframe', '4H').upper()}`
+💵 *سعر الدخول:* `${format_price(t['entry_price'])}`
+🎯 *سعر الإغلاق:* `${format_price(cur_price)}`
+💰 *إجمالي الربح المحقق:* `+{t['tp2_pct']:.2f}%` (+{abs(pnl_dollars):.2f} USDT)
+━━━━━━━━━━━━━━━━━━━━
+✅ تم إغلاق الصفقة بنجاح وحصد كامل الأرباح!
+{f'🆔 رقم أمر البيع على Binance Testnet: `#{testnet_sell_id}`' if testnet_sell_id else '🧪 تم إضافة الأرباح إلى المحفظة الافتراضية.'}
+━━━━━━━━━━━━━━━━━━━━"""
+                send_telegram_alert(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, tp2_msg)
+
+            elif t["status"] == "STOPPED_OUT":
+                sl_msg = f"""🛑 *تنبيه خروج: تم ضرب وقف الخسارة (Stop Loss)*
+
+🪙 *العملة:* `#{t['base']}/USDT`
+⏰ *الفريم:* `{t.get('timeframe', '4H').upper()}`
+💵 *سعر الدخول:* `${format_price(t['entry_price'])}`
+🛑 *سعر الخروج:* `${format_price(cur_price)}`
+📉 *نسبة الخسارة:* `-{t['sl_pct']:.2f}%` (-{abs(pnl_dollars):.2f} USDT)
+━━━━━━━━━━━━━━━━━━━━
+🛡️ تم الإغلاق التلقائي لحماية رأس المال من النزيف وتصفية المركز.
+{f'🆔 رقم أمر الإغلاق على Binance Testnet: `#{testnet_sell_id}`' if testnet_sell_id else '🧪 تم تسجيل الخسارة وتحديث رصيد المحفظة الافتراضية.'}
+━━━━━━━━━━━━━━━━━━━━"""
+                send_telegram_alert(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, sl_msg)
 
     data["active"] = still_active
     save_trades(data)
