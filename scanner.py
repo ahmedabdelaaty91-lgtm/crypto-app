@@ -24,7 +24,7 @@ if sys.platform == "win32":
 from config import BINANCE_API_URL, COINS_RAW, SYMBOL_ALIASES, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TIMEFRAMES, ENABLE_TESTNET_TRADING, TESTNET_TRADE_AMOUNT_USDT
 from strategies import evaluate_strategies, calculate_atr, find_structural_support, calculate_ema, calculate_rsi
 from telegram_notifier import send_telegram_alert, format_signal_message, format_price
-from trade_tracker import record_new_trade, send_daily_report_to_telegram
+from trade_tracker import record_new_trade, send_daily_report_to_telegram, send_full_performance_report, update_all_trades, load_trades
 
 # Global session with connection pooling
 session = requests.Session()
@@ -207,11 +207,18 @@ def get_cairo_time_str():
 
 def run_full_scan(bot_token="", chat_id="", notify=False):
     print("=" * 70, flush=True)
-    print("🚀 بدء فحص العملات الرقمية للسبوت (Binance Spot 12 Strategies Scanner)", flush=True)
+    print("🚀 بدء فحص العملات الرقمية للسبوت (Binance Spot Elite Strategies Scanner)", flush=True)
     print(f"⏰ الفريمات: {', '.join(TIMEFRAMES)} | عدد العملات في القائمة: {len(COINS_RAW)}", flush=True)
     print("=" * 70, flush=True)
 
-    print("[1/3] فحص صحة واتجاه البيتكوين (BTC Health Check)...", flush=True)
+    # 1. تحديث ومتابعة الصفقات المفتوحة مسبقاً وفحص أهدافها فوراً
+    print("[1/4] تحديث ومتابعة الصفقات المفتوحة وفحص أهداف TP / SL...", flush=True)
+    try:
+        update_all_trades()
+    except Exception as u_err:
+        print(f"  [Tracker Update Error]: {u_err}", flush=True)
+
+    print("[2/4] فحص صحة واتجاه البيتكوين (BTC Health Check)...", flush=True)
     btc_status, btc_is_crash, btc_warning = check_btc_health()
     print(f"  -> حالة البيتكوين: {btc_status}", flush=True)
     if btc_warning:
@@ -267,6 +274,12 @@ def run_full_scan(bot_token="", chat_id="", notify=False):
 ⏳ الصفقات السابقة المفتوحة ما زالت قيد المتابعة.
 ━━━━━━━━━━━━━━━━━━━━"""
             send_telegram_alert(bot_token, chat_id, no_trades_msg)
+            try:
+                print("  -> إرسال تقرير الحصاد ومتابعة الصفقات المحدث إلى تيليجرام...", flush=True)
+                time.sleep(1)
+                send_full_performance_report(target_chat_id=chat_id)
+            except Exception as rep_err:
+                print(f"[Report Error]: {rep_err}", flush=True)
         return []
 
     # Display results
@@ -362,6 +375,14 @@ def run_full_scan(bot_token="", chat_id="", notify=False):
 ⏳ الصفقات السابقة المفتوحة ما زالت قيد المتابعة.
 ━━━━━━━━━━━━━━━━━━━━"""
             send_telegram_alert(bot_token, chat_id, no_trades_msg)
+
+        # إرسال تقرير الصفقات والأداء الشامل المحدث تلقائياً بعد كل فحص دوري
+        try:
+            print("  -> إرسال تقرير الحصاد ومتابعة الصفقات المحدث إلى تيليجرام...", flush=True)
+            time.sleep(1)
+            send_full_performance_report(target_chat_id=chat_id)
+        except Exception as rep_err:
+            print(f"[Report Error]: {rep_err}", flush=True)
 
     return all_signals
 

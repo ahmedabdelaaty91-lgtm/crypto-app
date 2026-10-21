@@ -239,24 +239,24 @@ def evaluate_strategies(df: pd.DataFrame) -> list:
     tenkan, kijun, span_a, span_b = calculate_ichimoku(df)
     donchian_up, donchian_down = calculate_donchian(df, 20)
 
-    # 1. Aroon Zero Bounce: Aroon Osc bounces from <= 0 to > 0, Price > EMA 50
-    if (aroon_osc.iloc[-2] <= 0 and aroon_osc.iloc[-1] > 0) and (current_close > ema50.iloc[-1]):
-        signals.append({
-            "strategy": "Aroon Zero Bounce",
-            "reason": f"Aroon Osc crossed above 0 ({aroon_osc.iloc[-1]:.1f}) with Price > EMA50",
-            "strength": "High"
-        })
+    # 1. Aroon Zero Bounce: (DISABLED per user performance audit - caused false choppy rebounds)
+    # if (aroon_osc.iloc[-2] <= 0 and aroon_osc.iloc[-1] > 0) and (current_close > ema50.iloc[-1]):
+    #     signals.append({
+    #         "strategy": "Aroon Zero Bounce",
+    #         "reason": f"Aroon Osc crossed above 0 ({aroon_osc.iloc[-1]:.1f}) with Price > EMA50",
+    #         "strength": "High"
+    #     })
 
-    # 2. Aroon Deep Dip Sniper: Oversold bounce with structural hold and volume
-    recent_min_osc = aroon_osc.iloc[-4:-1].min()
-    dip_trend_ok = (current_close >= ema20.iloc[-1]) or (current_close >= ema50.iloc[-1])
-    dip_vol_ok = current_vol >= 1.15 * vol_sma20
-    if (recent_min_osc <= -85) and (current_close > current_open) and (current_close > prev_close) and dip_trend_ok and dip_vol_ok:
-        signals.append({
-            "strategy": "Aroon Deep Dip Sniper",
-            "reason": f"Aroon Osc was deep oversold ({recent_min_osc:.1f}) + Confirmed volume bounce above EMA support",
-            "strength": "High"
-        })
+    # 2. Aroon Deep Dip Sniper: (DISABLED per user performance audit - caused choppiness with KAVA/SHELL)
+    # recent_min_osc = aroon_osc.iloc[-4:-1].min()
+    # dip_trend_ok = (current_close >= ema20.iloc[-1]) or (current_close >= ema50.iloc[-1])
+    # dip_vol_ok = current_vol >= 1.15 * vol_sma20
+    # if (recent_min_osc <= -85) and (current_close > current_open) and (current_close > prev_close) and dip_trend_ok and dip_vol_ok:
+    #     signals.append({
+    #         "strategy": "Aroon Deep Dip Sniper",
+    #         "reason": f"Aroon Osc was deep oversold ({recent_min_osc:.1f}) + Confirmed volume bounce above EMA support",
+    #         "strength": "High"
+    #     })
 
     # 3. Supertrend + EMA 200: Supertrend is Bullish and Price > EMA 200
     st_bullish_now = trend.iloc[-1] == 1
@@ -279,36 +279,36 @@ def evaluate_strategies(df: pd.DataFrame) -> list:
             "strength": "Medium"
         })
 
-    # 5. EMA 20 / EMA 50: Golden Cross
-    ema_cross = (ema20.iloc[-2] <= ema50.iloc[-2] and ema20.iloc[-1] > ema50.iloc[-1])
-    if ema_cross:
-        signals.append({
-            "strategy": "EMA 20 / EMA 50 Golden Cross",
-            "reason": "EMA 20 crossed above EMA 50 (Fast Bullish Trend Ignition)",
-            "strength": "High"
-        })
+    # 5. EMA 20 / EMA 50: (DISABLED per user performance audit - lagging indicator)
+    # ema_cross = (ema20.iloc[-2] <= ema50.iloc[-2] and ema20.iloc[-1] > ema50.iloc[-1])
+    # if ema_cross:
+    #     signals.append({
+    #         "strategy": "EMA 20 / EMA 50 Golden Cross",
+    #         "reason": "EMA 20 crossed above EMA 50 (Fast Bullish Trend Ignition)",
+    #         "strength": "High"
+    #     })
 
-    # 6. Bollinger + MACD: Squeeze & Expansion with MACD Bullish Cross
-    macd_bullish = (macd_hist.iloc[-2] <= 0 and macd_hist.iloc[-1] > 0) or (macd.iloc[-2] <= macd_sig.iloc[-2] and macd.iloc[-1] > macd_sig.iloc[-1])
-    bb_expanding = bb_bw.iloc[-1] > bb_bw.iloc[-2]
-    if macd_bullish and bb_expanding:
-        signals.append({
-            "strategy": "Bollinger Squeeze + MACD",
-            "reason": "Volatility expansion after squeeze confirmed with MACD Bullish cross",
-            "strength": "Medium"
-        })
+    # 6. Bollinger + MACD: (DISABLED per user performance audit - caused drawdowns/whipsaws)
+    # macd_bullish = (macd_hist.iloc[-2] <= 0 and macd_hist.iloc[-1] > 0) or (macd.iloc[-2] <= macd_sig.iloc[-2] and macd.iloc[-1] > macd_sig.iloc[-1])
+    # bb_expanding = bb_bw.iloc[-1] > bb_bw.iloc[-2]
+    # if macd_bullish and bb_expanding:
+    #     signals.append({
+    #         "strategy": "Bollinger Squeeze + MACD",
+    #         "reason": "Volatility expansion after squeeze confirmed with MACD Bullish cross",
+    #         "strength": "Medium"
+    #     })
 
-    # 7. MFI Whale Accumulation: MFI was < 22 and now curling up with Whale Volume & Structure
-    mfi_deep = (mfi.iloc[-4:-1].min() < 22)
-    mfi_rising = (mfi.iloc[-1] > mfi.iloc[-2]) and (current_close > current_open)
-    mfi_vol_ok = current_vol >= 1.2 * vol_sma20
-    mfi_structure_ok = (current_close >= ema20.iloc[-1]) or (current_close >= ema50.iloc[-1])
-    if mfi_deep and mfi_rising and mfi_vol_ok and mfi_structure_ok:
-        signals.append({
-            "strategy": "MFI Whale Accumulation",
-            "reason": f"Smart money accumulation detected: MFI dipped to {mfi.iloc[-4:-1].min():.1f} and curling up with volume {current_vol/vol_sma20:.1f}x",
-            "strength": "High"
-        })
+    # 7. MFI Whale Accumulation: (DISABLED per user performance audit - false liquidity spikes)
+    # mfi_deep = (mfi.iloc[-4:-1].min() < 22)
+    # mfi_rising = (mfi.iloc[-1] > mfi.iloc[-2]) and (current_close > current_open)
+    # mfi_vol_ok = current_vol >= 1.2 * vol_sma20
+    # mfi_structure_ok = (current_close >= ema20.iloc[-1]) or (current_close >= ema50.iloc[-1])
+    # if mfi_deep and mfi_rising and mfi_vol_ok and mfi_structure_ok:
+    #     signals.append({
+    #         "strategy": "MFI Whale Accumulation",
+    #         "reason": f"Smart money accumulation detected: MFI dipped to {mfi.iloc[-4:-1].min():.1f} and curling up with volume {current_vol/vol_sma20:.1f}x",
+    #         "strength": "High"
+    #     })
 
     # 8. RSI Bullish Divergence: Price Lower Low, RSI Higher Low
     if check_rsi_divergence(df, rsi, lookback=25):

@@ -84,6 +84,8 @@ def record_new_trade(signal_data: dict):
 
 def update_all_trades():
     """Fetches current live ticker prices from Binance and evaluates active trades."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", TELEGRAM_BOT_TOKEN)
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", TELEGRAM_CHAT_ID)
     data = load_trades()
     if not data["active"]:
         return data
@@ -144,7 +146,7 @@ def update_all_trades():
 🛡️ *إدارة الأمان:* تم تأمين الصفقة ورفع الوقف إلى سعر الدخول لحجز الأرباح وتصفير المخاطرة!
 ⏳ *الهدف القادم (TP2):* `${format_price(t['tp2'])}` (+{t['tp2_pct']:.2f}%)
 ━━━━━━━━━━━━━━━━━━━━"""
-                send_telegram_alert(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, tp1_msg)
+                send_telegram_alert(token, chat_id, tp1_msg)
             still_active.append(t)
         else:
             still_active.append(t)
@@ -192,7 +194,7 @@ def update_all_trades():
 ✅ تم إغلاق الصفقة بنجاح وحصد كامل الأرباح!
 {f'🆔 رقم أمر البيع على Binance Testnet: `#{testnet_sell_id}`' if testnet_sell_id else '🧪 تم إضافة الأرباح إلى المحفظة الافتراضية.'}
 ━━━━━━━━━━━━━━━━━━━━"""
-                send_telegram_alert(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, tp2_msg)
+                send_telegram_alert(token, chat_id, tp2_msg)
 
             elif t["status"] == "STOPPED_OUT":
                 sl_msg = f"""🛑 *تنبيه خروج: تم ضرب وقف الخسارة (Stop Loss)*
@@ -206,7 +208,7 @@ def update_all_trades():
 🛡️ تم الإغلاق التلقائي لحماية رأس المال من النزيف وتصفية المركز.
 {f'🆔 رقم أمر الإغلاق على Binance Testnet: `#{testnet_sell_id}`' if testnet_sell_id else '🧪 تم تسجيل الخسارة وتحديث رصيد المحفظة الافتراضية.'}
 ━━━━━━━━━━━━━━━━━━━━"""
-                send_telegram_alert(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, sl_msg)
+                send_telegram_alert(token, chat_id, sl_msg)
 
     data["active"] = still_active
     save_trades(data)
@@ -281,9 +283,117 @@ def generate_daily_report():
 
 def send_daily_report_to_telegram(token=TELEGRAM_BOT_TOKEN, chat_id=TELEGRAM_CHAT_ID):
     """Sends the formatted daily report to the user."""
-    report = generate_daily_report()
-    return send_telegram_alert(token, chat_id, report)
+    return send_full_performance_report(target_chat_id=chat_id)
+
+
+def send_full_performance_report(target_chat_id=None):
+    """
+    Sends the exact comprehensive report identical to SMC bot:
+    📊 السجل الدائم لأداء صفقات Spot 📊
+    """
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", TELEGRAM_BOT_TOKEN)
+    chat_id = target_chat_id or os.environ.get("TELEGRAM_CHAT_ID", TELEGRAM_CHAT_ID)
+    data = update_all_trades()
+    active_trades = data.get("active", [])
+    closed_trades = data.get("closed", [])
+
+    # Balance from Binance Testnet or Virtual $10,000
+    bal = 10000.0
+    try:
+        from testnet_trader import get_testnet_balance
+        t_bal = get_testnet_balance("USDT")
+        if t_bal > 0:
+            bal = t_bal
+    except Exception:
+        pass
+
+    wins = [t for t in closed_trades if "HIT" in t.get("status", "")]
+    losses = [t for t in closed_trades if t.get("status") == "STOPPED_OUT"]
+    total_closed = len(wins) + len(losses)
+    win_rate = (len(wins) / total_closed * 100) if total_closed > 0 else 0.0
+
+    # Calculate net profit in dollars
+    win_pnl = sum([float(t.get("testnet_realized_usdt") or (float(t.get("testnet_cost", 10.0)) * t.get("tp2_pct", 10.0) / 100.0)) for t in wins])
+    loss_pnl = sum([abs(float(t.get("testnet_realized_usdt") or (float(t.get("testnet_cost", 10.0)) * t.get("sl_pct", 3.0) / 100.0))) for t in losses])
+    net_pnl = win_pnl - loss_pnl
+
+    # 1. Winning trades
+    if wins:
+        wins_text = ""
+        for w in wins[-5:]:
+            e_str = format_price(w['entry_price'])
+            c_str = format_price(w.get('current_price', w['entry_price']))
+            pnl_d = float(w.get("testnet_realized_usdt") or (10.0 * w.get("tp2_pct", 10.0) / 100.0))
+            wins_text += f"• `#{w['base']}`: دخول `${e_str}` ⬅️ خروج `${c_str}` (+${pnl_d:.2f})\n"
+    else:
+        wins_text = "لا توجد صفقات رابحة مغلقة بعد.\n"
+
+    # 2. Losing trades
+    if losses:
+        losses_text = ""
+        for l in losses[-5:]:
+            e_str = format_price(l['entry_price'])
+            c_str = format_price(l.get('current_price', l['entry_price']))
+            loss_d = abs(float(l.get("testnet_realized_usdt") or (10.0 * l.get("sl_pct", 3.0) / 100.0)))
+            losses_text += f"• `#{l['base']}`: دخول `${e_str}` ⬅️ وقف `${c_str}` (-${loss_d:.2f})\n"
+    else:
+        losses_text = "لا توجد صفقات خاسرة حتى الآن.\n"
+
+    # 3. Open trades
+    if active_trades:
+        open_text = ""
+        for o in active_trades:
+            e_str = format_price(o['entry_price'])
+            c_str = format_price(o['current_price'])
+            tp_str = format_price(o['tp2'])
+            pnl = o.get('pnl_pct', 0.0)
+            sign = "+" if pnl >= 0 else ""
+            pnl_emoji = "🟢" if pnl >= 0 else "🔴"
+            open_text += f"• `#{o['base']}`: دخول `${e_str}` | الحالي `${c_str}` ({pnl_emoji} {sign}{pnl:.2f}%) | هدف `${tp_str}`\n"
+    else:
+        open_text = "لا توجد صفقات مفتوحة الآن.\n"
+
+    msg = (
+        f"📊 *السجل الدائم لأداء صفقات Spot (Elite Strategies)* 📊\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"💼 *رصيد محفظة باينانس:* `${bal:,.2f}` USDT\n"
+        f"💰 *صافي الأرباح الكلية:* `{net_pnl:+.2f}$`\n"
+        f"🎯 *نسبة الفوز الحقيقية:* `{win_rate:.1f}%`\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"✅ *الصفقات الرابحة ({len(wins)}):* 🟢\n"
+        f"{wins_text}"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"❌ *الصفقات التي ضربت الوقف ({len(losses)}):* 🔴\n"
+        f"{losses_text}"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"⏳ *الصفقات قيد التداول حالياً ({len(active_trades)}):* 🟡\n"
+        f"{open_text}"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"💡 *أرسل كلمة (تقرير) في أي وقت لاستلام هذا التقرير فوراً!*"
+    )
+    return send_telegram_alert(token, chat_id, msg)
+
+
+_last_telegram_update_id = 0
+
+def check_telegram_commands():
+    """Listens for user commands like 'تقرير' or '/report' and responds immediately."""
+    global _last_telegram_update_id
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates?offset={_last_telegram_update_id + 1}&timeout=1"
+        res = requests.get(url, timeout=3).json()
+        if res.get("ok") and res.get("result"):
+            for item in res["result"]:
+                _last_telegram_update_id = item["update_id"]
+                msg_obj = item.get("message", {})
+                chat_id = str(msg_obj.get("chat", {}).get("id", ""))
+                text = msg_obj.get("text", "").strip()
+                if text in ["تقرير", "/report", "صفقات", "/trades", "الارباح", "تقرير الصفقات"]:
+                    print(f"[Telegram Listener] Received command '{text}' from {chat_id}, sending report...", flush=True)
+                    send_full_performance_report(target_chat_id=chat_id)
+    except Exception as e:
+        pass
 
 
 if __name__ == "__main__":
-    print(generate_daily_report())
+    send_full_performance_report()
