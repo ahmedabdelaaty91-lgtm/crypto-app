@@ -100,13 +100,14 @@ def format_signal_message(signal_data: dict) -> str:
         t_cost = signal_data.get("testnet_cost", 10.0)
         msg += f"""
 🧪 *تنفيذ تلقائي على باينانس التجريبي (Binance Testnet):*
-✅ تم تنفيذ الشراء الفوري: `{t_qty} {base}` بقيمة `${t_cost:.2f} USDT`
+✅ تم تنفيذ الشراء الفوري: `{t_qty} {base}` بقيمة `${t_cost:.2f} USDT` (8% من المحفظة)
 🆔 رقم الأمر: `#{t_id}`
 ━━━━━━━━━━━━━━━━━━━━"""
     else:
+        t_cost = signal_data.get("testnet_cost", 800.0)
         msg += f"""
 🧪 *تنفيذ تلقائي في المحفظة الافتراضية (Paper Trading):*
-✅ تم فتح الصفقة افتراضياً بقيمة `$10.00 USDT`
+✅ تم فتح الصفقة افتراضياً بقيمة `${t_cost:,.2f} USDT` (8% من المحفظة)
 📊 جاري المتابعة اللحظية حتى ضرب الأهداف أو الوقف...
 ━━━━━━━━━━━━━━━━━━━━"""
 
@@ -115,4 +116,3 @@ def format_signal_message(signal_data: dict) -> str:
 📈 [عرض الشارت على TradingView](https://www.tradingview.com/chart/?symbol=BINANCE:{base}USDT)
 """
     return msg
-

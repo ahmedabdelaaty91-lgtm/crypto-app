@@ -21,7 +21,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from config import BINANCE_API_URL, COINS_RAW, SYMBOL_ALIASES, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TIMEFRAMES, ENABLE_TESTNET_TRADING, TESTNET_TRADE_AMOUNT_USDT
+from config import BINANCE_API_URL, COINS_RAW, SYMBOL_ALIASES, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TIMEFRAMES, ENABLE_TESTNET_TRADING, TESTNET_TRADE_AMOUNT_USDT, TRADE_RISK_PERCENT
 from strategies import evaluate_strategies, calculate_atr, find_structural_support, calculate_ema, calculate_rsi
 from telegram_notifier import send_telegram_alert, format_signal_message, format_price
 from trade_tracker import record_new_trade, send_daily_report_to_telegram, send_full_performance_report, update_all_trades, load_trades
@@ -335,12 +335,16 @@ def run_full_scan(bot_token="", chat_id="", notify=False):
             else:
                 primary['strategy'] = f"⭐ تطابق {len(sigs)} استراتيجيات: {combined_names}"
 
-            # التنفيذ الفعلي التلقائي على حساب Binance Spot Testnet (إذا كان مفعلاً)
+            # التنفيذ الفعلي التلقائي على حساب Binance Spot Testnet (بنسبة 8% من رصيد المحفظة)
+            trade_usdt = TESTNET_TRADE_AMOUNT_USDT
             if ENABLE_TESTNET_TRADING:
                 try:
-                    from testnet_trader import execute_testnet_buy
-                    print(f"  [Testnet] 🧪 جاري تنفيذ شراء تلقائي لـ {sym} بقيمة ${TESTNET_TRADE_AMOUNT_USDT} على باينانس التجريبي...", flush=True)
-                    t_res = execute_testnet_buy(sym, TESTNET_TRADE_AMOUNT_USDT)
+                    from testnet_trader import execute_testnet_buy, get_testnet_balance
+                    bal = get_testnet_balance("USDT")
+                    if bal > 0:
+                        trade_usdt = max(10.0, round(bal * (TRADE_RISK_PERCENT / 100.0), 2))
+                    print(f"  [Testnet] 🧪 جاري تنفيذ شراء تلقائي لـ {sym} بقيمة ${trade_usdt:.2f} ({TRADE_RISK_PERCENT:.1f}% من رصيد ${bal:,.2f} USDT)...", flush=True)
+                    t_res = execute_testnet_buy(sym, trade_usdt)
                     if t_res.get("success"):
                         primary["testnet_order_id"] = t_res["order_id"]
                         primary["testnet_qty"] = t_res["qty"]
@@ -351,6 +355,8 @@ def run_full_scan(bot_token="", chat_id="", notify=False):
                         print(f"  [Testnet] ⚠️ تعذر التنفيذ على باينانس التجريبي: {t_res.get('error')}", flush=True)
                 except Exception as t_err:
                     print(f"  [Testnet Error]: {t_err}", flush=True)
+            else:
+                primary["testnet_cost"] = round(10000.0 * (TRADE_RISK_PERCENT / 100.0), 2)
 
             try:
                 msg = format_signal_message(primary)

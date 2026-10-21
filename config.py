@@ -45,5 +45,6 @@ BINANCE_TESTNET_API_KEY = os.getenv("BINANCE_TESTNET_API_KEY") or "rKPp8uQ5VJlBb
 BINANCE_TESTNET_SECRET_KEY = os.getenv("BINANCE_TESTNET_SECRET_KEY") or "Xn96v8wGmSDI5XVqjswKtqu50XI6aTDjru2vQ1Id6X8aQlh5JNi1JeOjhZ0gxHoe"
 BINANCE_TESTNET_URL = "https://testnet.binance.vision"
 ENABLE_TESTNET_TRADING = (os.getenv("ENABLE_TESTNET_TRADING") or "true").lower() == "true"
+TRADE_RISK_PERCENT = float(os.getenv("TRADE_RISK_PERCENT") or "8.0")  # نسبة الدخول لكل صفقة (8% من رأس المال)
 TESTNET_TRADE_AMOUNT_USDT = float(os.getenv("TESTNET_TRADE_AMOUNT_USDT") or "10.0")
 
